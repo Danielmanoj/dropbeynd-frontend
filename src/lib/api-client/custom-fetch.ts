@@ -352,10 +352,14 @@ export async function customFetch<T = unknown>(
     headers.set("accept", DEFAULT_JSON_ACCEPT);
   }
 
-  // Attach bearer token when an auth getter is configured and no
-  // Authorization header has been explicitly provided.
-  if (_authTokenGetter && !headers.has("authorization")) {
-    const token = await _authTokenGetter();
+  // Attach bearer token when an auth getter is configured or Clerk session is available
+  if (!headers.has("authorization")) {
+    let token = _authTokenGetter ? await _authTokenGetter() : null;
+    if (!token && typeof window !== "undefined" && (window as any).Clerk?.session) {
+      try {
+        token = await (window as any).Clerk.session.getToken();
+      } catch {}
+    }
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
@@ -363,7 +367,7 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  const response = await fetch(input, { credentials: "include", ...init, method, headers });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

@@ -407,9 +407,12 @@ function PostCard({ post, isBookmarked, onBookmarkChange }: PostCardProps) {
 // ─── Main Feed Page ────────────────────────────────────────────────────────────
 
 export default function Feed() {
+  const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data: posts, isLoading } = useGetFeed();
+  const { data: posts, isLoading } = useGetFeed({
+    query: { enabled: !!isSignedIn } as any,
+  });
   const bookmarkPost = useBookmarkPost();
 
   const [bookmarkStates, setBookmarkStates] = useState<Record<string, boolean>>({});
