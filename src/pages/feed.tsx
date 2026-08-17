@@ -420,13 +420,13 @@ export default function Feed() {
     queryClient.invalidateQueries({ queryKey: getGetFeedQueryKey() });
   }
 
-  const filteredPosts = (posts ?? []).filter((post: any) => {
+  const filteredPosts = (Array.isArray(posts) ? posts : []).filter((post: any) => {
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
     return (
-      post.title?.toLowerCase().includes(q) ||
-      post.body?.toLowerCase().includes(q) ||
-      post.creatorName?.toLowerCase().includes(q)
+      post?.title?.toLowerCase().includes(q) ||
+      post?.body?.toLowerCase().includes(q) ||
+      post?.creatorName?.toLowerCase().includes(q)
     );
   });
 

@@ -93,28 +93,31 @@ export default function Home() {
     queryFn: fetchStories,
   });
 
-  const filterCreators = useCallback((list: CreatorItem[]) => {
-    let r = list;
-    if (searchQuery) r = r.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const safeArray = <T,>(val: any): T[] => (Array.isArray(val) ? val : []);
+
+  const filterCreators = useCallback((list: any) => {
+    let r = safeArray<CreatorItem>(list);
+    if (searchQuery) r = r.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase()));
     if (categoryFilter) r = r.filter(c => c.niche?.includes(categoryFilter));
     return r;
   }, [searchQuery, categoryFilter]);
 
-  const filterContent = useCallback((list: PostItem[]) => {
-    let r = list;
-    if (searchQuery) r = r.filter(p => (p.title ?? p.creatorName).toLowerCase().includes(searchQuery.toLowerCase()));
+  const filterContent = useCallback((list: any) => {
+    let r = safeArray<PostItem>(list);
+    if (searchQuery) r = r.filter(p => (p.title ?? p.creatorName ?? "").toLowerCase().includes(searchQuery.toLowerCase()));
     if (categoryFilter) r = r.filter(p => p.creatorNiche?.includes(categoryFilter));
     return r;
   }, [searchQuery, categoryFilter]);
 
-  const trending = filterCreators(allCreators).sort((a, b) => b.subscriberCount - a.subscriberCount).slice(0, 15);
-  const filtered = filterCreators(allCreators);
+  const safeAllCreators = safeArray<CreatorItem>(allCreators);
+  const trending = filterCreators(safeAllCreators).sort((a, b) => (b.subscriberCount || 0) - (a.subscriberCount || 0)).slice(0, 15);
+  const filtered = filterCreators(safeAllCreators);
   const filteredFree = accessFilter !== "premium" ? filterContent(freeContent) : [];
   const filteredPremium = accessFilter !== "free" ? filterContent(premiumContent) : [];
   const filteredNew = filterCreators(newCreators);
 
-  const topCreators = [...allCreators]
-    .sort((a, b) => b.subscriberCount - a.subscriberCount)
+  const topCreators = [...safeAllCreators]
+    .sort((a, b) => (b.subscriberCount || 0) - (a.subscriberCount || 0))
     .slice(0, 10);
 
   const toCreatorItems = (list: CreatorItem[]) =>
