@@ -329,10 +329,30 @@ export default function AIAgentPage() {
   function handleScanComplete(scan: ScanDetail) {
     setRunningType(null);
     loadScans();
-    toast({
-      title: "Scan complete",
-      description: scan.summary ?? `${scan.reports?.length ?? 0} findings generated`,
-    });
+    if (scan.status === "failed") {
+      toast({
+        title: "Scan failed",
+        description: scan.summary ?? "An error occurred during scan execution",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Scan complete",
+        description: scan.summary ?? `${scan.reports?.length ?? 0} findings generated`,
+      });
+    }
+  }
+
+  async function clearAllScans() {
+    if (!confirm("Are you sure you want to clear all scan history?")) return;
+    try {
+      await authFetch(`${BASE}/api/ai-agent/scans`, { method: "DELETE" });
+      loadScans();
+      setSelectedScan(null);
+      toast({ title: "Scan history cleared", description: "All past scans have been deleted." });
+    } catch {
+      toast({ title: "Failed to clear scans", variant: "destructive" });
+    }
   }
 
   async function openScan(scan: Scan) {
@@ -514,9 +534,20 @@ export default function AIAgentPage() {
                   <h2 className="text-xl font-black text-white tracking-tight">Scan History</h2>
                   <p className="text-zinc-600 text-sm mt-0.5">{scans.length} scans recorded</p>
                 </div>
-                <button onClick={loadScans} className="p-2 rounded-xl bg-white/5 border border-white/[0.07] text-zinc-500 hover:text-white transition-all">
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {scans.length > 0 && (
+                    <button
+                      onClick={clearAllScans}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 text-xs font-semibold transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear History
+                    </button>
+                  )}
+                  <button onClick={loadScans} className="p-2 rounded-xl bg-white/5 border border-white/[0.07] text-zinc-500 hover:text-white transition-all" title="Refresh">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
               {loadingScans ? (
                 <div className="py-20 text-center">
