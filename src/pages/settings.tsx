@@ -349,7 +349,7 @@ export default function Settings() {
                     <FormControl>
                       <Input className="max-w-md" {...field} />
                     </FormControl>
-                    <FormDescription>Your public display name on CreatorHub.</FormDescription>
+                    <FormDescription>Your public display name on DropBeynd.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -440,7 +440,7 @@ export default function Settings() {
           <CardDescription>Irreversible actions that affect your account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">To delete your account or transfer data, contact <span className="text-violet-600 dark:text-violet-400">support@creatorhub.com</span>.</p>
+          <p className="text-muted-foreground text-sm">To delete your account or transfer data, contact <span className="text-violet-600 dark:text-violet-400">support@dropbeynd.com</span>.</p>
         </CardContent>
       </Card>
     </div>

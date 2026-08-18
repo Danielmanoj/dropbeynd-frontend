@@ -287,7 +287,7 @@ export default function Payments() {
     const rows = payments.map((p) => [
       p.id,
       format(new Date(p.createdAt), "yyyy-MM-dd"),
-      `Subscription: ${p.creatorName ?? "CreatorHub"}`,
+      `Subscription: ${p.creatorName ?? "DropBeynd"}`,
       p.status,
       `$${p.amount.toFixed(2)}`,
     ]);
@@ -414,7 +414,7 @@ export default function Payments() {
                           {format(new Date(payment.createdAt), "MMM d, yyyy · HH:mm")}
                         </TableCell>
                         <TableCell className="font-medium text-foreground">
-                          Subscription: {payment.creatorName ?? "CreatorHub"}
+                          Subscription: {payment.creatorName ?? "DropBeynd"}
                         </TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell className="text-right font-bold text-foreground">
@@ -457,7 +457,7 @@ export default function Payments() {
                 <div className="relative h-40 rounded-2xl bg-gradient-to-tr from-violet-900 via-indigo-900 to-slate-900 p-5 text-white shadow-xl flex flex-col justify-between overflow-hidden border border-violet-500/30 my-2">
                   <div className="flex justify-between items-start">
                     <div className="text-xs tracking-widest uppercase font-semibold text-violet-200">
-                      CreatorHub Secure Pay
+                      DropBeynd Secure Pay
                     </div>
                     <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-white/20">
                       {cardBrand}

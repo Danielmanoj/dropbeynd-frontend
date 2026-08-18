@@ -158,7 +158,7 @@ function SuspendedScreen() {
         </div>
         <div className="flex flex-col gap-3">
           <a
-            href="mailto:support@creatorhub.app"
+            href="mailto:support@dropbeynd.app"
             className="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors text-sm font-medium inline-block"
           >
             Contact Support
@@ -255,12 +255,12 @@ function ClerkProviderWithRoutes() {
         signIn: {
           start: {
             title: "Welcome back",
-            subtitle: "Sign in to access CreatorHub",
+            subtitle: "Sign in to access DropBeynd",
           },
         },
         signUp: {
           start: {
-            title: "Join CreatorHub",
+            title: "Join DropBeynd",
             subtitle: "Create your account today",
           },
         },
@@ -308,7 +308,7 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="creatorhub-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="dropbeynd-theme">
       <TooltipProvider>
         <WouterRouter base={basePath}>
           <ClerkProviderWithRoutes />

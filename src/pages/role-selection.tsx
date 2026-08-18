@@ -82,7 +82,7 @@ export default function RoleSelection() {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground mb-4">
             <Compass className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome to CreatorHub</h1>
+          <h1 className="text-2xl font-bold text-foreground">Welcome to DropBeynd</h1>
           <p className="text-muted-foreground text-center mt-2">
             {step === "role" ? "How do you want to use the platform?" : "Set up your creator profile"}
           </p>

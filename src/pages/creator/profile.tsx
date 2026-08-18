@@ -235,7 +235,7 @@ export default function CreatorProfilePage() {
         const updated = await r.json();
         setCreator(updated);
         queryClient.invalidateQueries();
-        toast({ title: "Profile picture updated!", description: "Your new avatar is live across CreatorHub." });
+        toast({ title: "Profile picture updated!", description: "Your new avatar is live across DropBeynd." });
       }
     } catch {
       toast({ title: "Error", description: "Failed to update avatar.", variant: "destructive" });

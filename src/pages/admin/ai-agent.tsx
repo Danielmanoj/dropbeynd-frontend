@@ -227,7 +227,7 @@ function ScanTerminal({ scanId, onComplete }: { scanId: string; onComplete: (sca
           <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
         </div>
         <span className="text-zinc-500 text-xs font-mono flex-1 text-center">
-          agent@creatorhub ~ scan/{detail?.type ?? "…"}
+          agent@dropbeynd ~ scan/{detail?.type ?? "…"}
         </span>
         {isRunning && (
           <div className="flex items-center gap-1.5 text-amber-400">

@@ -1062,7 +1062,7 @@ export default function AdminDashboard() {
               <Shield className="h-3.5 w-3.5 text-black" />
             </div>
             <div>
-              <p className="text-white font-black text-sm leading-tight tracking-tight">CreatorHub</p>
+              <p className="text-white font-black text-sm leading-tight tracking-tight">DropBeynd</p>
               <p className="text-zinc-600 text-[10px] font-semibold uppercase tracking-widest">Admin Console</p>
             </div>
           </div>

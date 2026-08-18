@@ -56,14 +56,33 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
     return () => clearInterval(interval);
   }, [next, items.length]);
 
-  if (isLoading || items.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="relative w-full h-[70vh] min-h-[500px] overflow-hidden flex items-center bg-zinc-950">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+        <div className="relative z-10 px-8 md:px-16 max-w-2xl space-y-4 animate-pulse">
+          <div className="h-6 w-28 rounded-full bg-zinc-800" />
+          <div className="h-12 md:h-16 w-4/5 rounded-2xl bg-zinc-800" />
+          <div className="h-4 w-full max-w-md rounded bg-zinc-800/80" />
+          <div className="h-4 w-2/3 max-w-sm rounded bg-zinc-800/60" />
+          <div className="flex gap-3 pt-3">
+            <div className="h-11 w-36 rounded-lg bg-zinc-800" />
+            <div className="h-11 w-44 rounded-lg bg-zinc-800/60" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <div className="relative w-full h-[60vh] min-h-[460px] overflow-hidden flex items-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black">
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="relative z-10 px-8 md:px-16 max-w-3xl">
           <span className="inline-block text-xs font-semibold uppercase tracking-widest mb-3 px-3 py-1 rounded-full text-zinc-300 bg-white/10 border border-white/20">
-            Welcome to Drop Beyond
+            Welcome to DropBeynd
           </span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
             Discover & Connect with Elite Creators

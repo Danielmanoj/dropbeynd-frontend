@@ -73,7 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             >
               <Compass className="h-4 w-4" />
             </div>
-            <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">CreatorHub</span>
+            <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">DropBeynd</span>
           </Link>
         </div>
 
@@ -192,7 +192,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             >
               <Compass className="h-4 w-4" />
             </div>
-            <span className="text-foreground">CreatorHub</span>
+            <span className="text-foreground">DropBeynd</span>
           </Link>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>

@@ -159,7 +159,7 @@ export default function Home() {
             >
               <Compass className="h-5 w-5" />
             </div>
-            <span className="hidden sm:inline">CreatorHub</span>
+            <span className="hidden sm:inline">DropBeynd</span>
           </div>
         </Link>
 
@@ -383,7 +383,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t py-8 text-center text-sm border-border text-muted-foreground">
-        <p>© {new Date().getFullYear()} CreatorHub. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} DropBeynd. All rights reserved.</p>
       </footer>
     </div>
   );

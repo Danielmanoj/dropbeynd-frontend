@@ -50,7 +50,7 @@ const ENDPOINT_FOR_TYPE: Record<UploadType, string> = {
 
 // ─── localStorage persistence ─────────────────────────────────────────────────
 
-const LS_PREFIX = "creatorhub_uploader";
+const LS_PREFIX = "dropbeynd_uploader";
 
 interface PersistedState {
   fileName: string;
