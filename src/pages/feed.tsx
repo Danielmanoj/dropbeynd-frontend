@@ -6,6 +6,7 @@ import {
   Image as ImageIcon, Compass, MoreHorizontal, Verified,
   Eye, TrendingUp, Sparkles, Search, X
 } from "lucide-react";
+import { useAuth } from "@clerk/react";
 import { useGetFeed, getGetFeedQueryKey, useBookmarkPost } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -410,7 +411,7 @@ export default function Feed() {
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data: posts, isLoading } = useGetFeed({
+  const { data: posts, isLoading } = useGetFeed(undefined, {
     query: { enabled: !!isSignedIn } as any,
   });
   const bookmarkPost = useBookmarkPost();

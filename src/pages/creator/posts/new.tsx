@@ -37,6 +37,7 @@ const MEDIA_OPTIONS: { value: MediaType; label: string; icon: React.ElementType;
 export default function CreatePost() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const createPost = useCreatePost();
 
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>("");
