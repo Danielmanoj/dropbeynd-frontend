@@ -153,111 +153,78 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* ── Fixed Nav Header with Integrated Search & Filters ── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-3 backdrop-blur-md border-b border-border/50 bg-background/85"
-      >
-        <div className="flex items-center gap-5">
+      {/* ── iPhone Liquid Glass Floating Navbar ── */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-4xl">
+        <div
+          className="flex items-center justify-between px-5 md:px-7 py-2.5 rounded-full border border-white/25 dark:border-white/15 bg-background/60 dark:bg-black/45 backdrop-blur-2xl backdrop-saturate-200 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5),inset_0_1px_2px_0_rgba(255,255,255,0.4)] transition-all duration-300"
+        >
+          {/* Logo */}
           <Link href="/">
-            <div className="flex items-center gap-2 font-extrabold text-xl text-foreground cursor-pointer">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
-              >
-                <Compass className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 font-extrabold text-base md:text-lg text-foreground cursor-pointer group">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg text-black bg-silver-gradient shadow-silver-glow group-hover:scale-105 transition-transform">
+                <Compass className="h-4 w-4" />
               </div>
-              <span className="hidden sm:inline">DropBeynd</span>
+              <span className="tracking-tight font-bold text-foreground">DropBeynd</span>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-            <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">Browse</Link>
-            {isSignedIn && (
-              <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">My Feed</Link>
-            )}
+          {/* Clean Nav Links: Home, Search, Feed */}
+          <nav className="flex items-center gap-5 md:gap-7 text-sm font-medium">
+            <Link href="/" className="text-foreground font-semibold hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+              Search
+            </Link>
+            <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">
+              Feed
+            </Link>
           </nav>
-        </div>
 
-        {/* ── Search & Filter Integration in Nav ── */}
-        <div className="flex items-center gap-2 flex-1 max-w-xs md:max-w-md mx-3">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-            <Input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search creators..."
-              className="h-8 pl-8 pr-8 text-xs bg-card/60 border-border/60 text-foreground placeholder:text-muted-foreground rounded-full focus-visible:ring-1"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+          {/* Right Controls / Clean Liquid CTA */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </Button>
+
+            {isSignedIn ? (
+              <>
+                <NotificationBell />
+                <Link href="/settings">
+                  <Button
+                    size="sm"
+                    className="font-semibold gap-1.5 rounded-full px-4 h-8 text-xs text-black bg-silver-gradient shadow-sm hover:opacity-90 transition-opacity"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Profile</span>
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/sign-in">
+                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-muted-foreground hover:text-foreground gap-1.5 h-8 text-xs rounded-full">
+                    <LogIn className="h-3.5 w-3.5" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button
+                    size="sm"
+                    className="font-semibold rounded-full px-4 h-8 text-xs text-black bg-silver-gradient shadow-sm hover:opacity-90 transition-opacity"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
-
-          {/* Access Mode Selector */}
-          <div className="hidden sm:flex items-center gap-1 bg-muted/60 p-0.5 rounded-full border border-border/40">
-            {(["all", "free", "premium"] as const).map((a) => (
-              <button
-                key={a}
-                onClick={() => setAccessFilter(a)}
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
-                  accessFilter === a
-                    ? "bg-silver-gradient text-black shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {a.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title="Toggle theme"
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-
-          {isSignedIn ? (
-            <>
-              <NotificationBell />
-              <Link href="/settings">
-                <Button
-                  size="sm"
-                  className="font-semibold gap-1.5 rounded-full px-3.5 h-8 text-xs text-black bg-silver-gradient"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5 h-8 text-xs">
-                  <LogIn className="h-3.5 w-3.5" />
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button
-                  size="sm"
-                  className="font-semibold rounded-full px-3.5 h-8 text-xs text-black bg-silver-gradient"
-                >
-                  Get Started
-                </Button>
-              </Link>
-            </>
-          )}
         </div>
       </header>
 
