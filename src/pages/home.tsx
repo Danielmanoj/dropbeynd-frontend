@@ -1,18 +1,29 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
-import { Compass, LogIn, User, Crown, Sun, Moon } from "lucide-react";
+import {
+  Compass, LogIn, User, Crown, Sun, Moon, Play,
+  Plus, Check, X, Volume2, VolumeX, Maximize2, Sparkles, Film, Flame, Award
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { HeroBanner } from "@/components/hero-banner";
+import { HeroBanner, HeroItem } from "@/components/hero-banner";
 import { StoryBar } from "@/components/story-bar";
-import { ContentRow } from "@/components/content-row";
+import { ContentRow, ContentItem } from "@/components/content-row";
 import { FilterBar } from "@/components/filter-bar";
 import { NotificationBell } from "@/components/notification-bell";
 import { useTheme } from "@/components/theme-provider";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+const SAMPLE_VIDEOS = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+];
 
 async function fetchPublicCreators(params?: Record<string, string>) {
   const q = params ? "?" + new URLSearchParams(params).toString() : "";
@@ -64,9 +75,20 @@ export default function Home() {
   const { isSignedIn } = useAuth();
   const { theme, setTheme } = useTheme();
 
+  const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<"all" | "free" | "premium">("all");
+  const [activeTheaterItem, setActiveTheaterItem] = useState<any | null>(null);
+
+  // Dynamic scroll listener for transparent-to-frosted glass top navigation
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const { data: allCreators = [], isLoading: creatorsLoading } = useQuery({
     queryKey: ["public-creators"],
@@ -120,63 +142,99 @@ export default function Home() {
     .sort((a, b) => (b.subscriberCount || 0) - (a.subscriberCount || 0))
     .slice(0, 10);
 
-  const toCreatorItems = (list: CreatorItem[]) =>
-    list.map(c => ({
+  const toCreatorItems = (list: CreatorItem[], aspect: "16/9" | "2/3" = "16/9"): ContentItem[] =>
+    list.map((c, i) => ({
       id: c.id,
       type: "creator" as const,
       title: c.name,
       subtitle: c.niche,
       avatarUrl: c.avatarUrl,
-      thumbnailUrl: c.coverUrl,
+      thumbnailUrl: c.coverUrl || c.avatarUrl,
+      videoUrl: SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length],
       niche: c.niche,
       price: c.monthlyPrice,
       subscriberCount: c.subscriberCount,
+      aspect,
+      duration: "Series · 4K",
+      rating: "U/A 16+",
+      matchScore: 95 + (i % 5),
       href: `/creators/${c.id}`,
     }));
 
-  const toPostItems = (list: PostItem[]) =>
-    list.map(p => ({
+  const toPostItems = (list: PostItem[], aspect: "16/9" | "2/3" = "16/9"): ContentItem[] =>
+    list.map((p, i) => ({
       id: p.id,
       type: "post" as const,
       title: p.title ?? p.creatorName,
       subtitle: p.creatorName,
-      thumbnailUrl: p.mediaUrl,
+      thumbnailUrl: p.mediaUrl || p.creatorAvatarUrl,
       avatarUrl: p.creatorAvatarUrl,
+      videoUrl: p.mediaUrl && p.mediaUrl.endsWith(".mp4") ? p.mediaUrl : SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length],
       isLocked: p.isLocked,
       niche: p.creatorNiche,
+      aspect,
+      duration: "1h 44m",
+      rating: "U/A 16+",
+      matchScore: 97 + (i % 3),
       href: `/creators/${p.creatorId}`,
     }));
 
+  const handlePlayTrailer = (item: any) => {
+    setActiveTheaterItem({
+      title: item.name || item.title || "DropBeynd Exclusive",
+      subtitle: item.niche || item.subtitle || "Original Trailer",
+      videoUrl: item.videoUrl || SAMPLE_VIDEOS[0],
+      bio: item.bio || "Experience premium 4K Ultra HD streaming on DropBeynd with multi-channel audio.",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black">
+      {/* ── Top Floating Glass OTT Navigation Header ── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md border-b border-border/50 bg-background/80"
+        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-14 py-4 transition-all duration-500 ${
+          isScrolled
+            ? "bg-black/90 backdrop-blur-xl border-b border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-3.5"
+            : "bg-gradient-to-b from-black/90 via-black/40 to-transparent border-b border-transparent"
+        }`}
       >
-        <Link href="/">
-          <div className="flex items-center gap-2 font-extrabold text-xl text-foreground cursor-pointer">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
-            >
-              <Compass className="h-5 w-5" />
+        <div className="flex items-center gap-8">
+          <Link href="/">
+            <div className="flex items-center gap-2.5 font-black text-xl md:text-2xl text-white tracking-tighter cursor-pointer group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-[0_0_20px_rgba(6,182,212,0.5)] group-hover:scale-105 transition-transform">
+                <Film className="h-5 w-5" />
+              </div>
+              <span>
+                DROP<span className="text-cyan-400">BEYND</span>
+              </span>
             </div>
-            <span className="hidden sm:inline">DropBeynd</span>
-          </div>
-        </Link>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-          <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">Browse</Link>
-          {isSignedIn && (
-            <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">My Feed</Link>
-          )}
-        </nav>
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-bold text-zinc-300">
+            <Link href="/" className="text-white hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+              Home
+            </Link>
+            <Link href="/browse" className="hover:text-cyan-400 transition-colors">
+              Movies & Series
+            </Link>
+            <Link href="/browse" className="hover:text-cyan-400 transition-colors">
+              Creators
+            </Link>
+            {isSignedIn && (
+              <Link href="/feed" className="hover:text-cyan-400 transition-colors">
+                My Feed
+              </Link>
+            )}
+          </nav>
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+            className="h-9 w-9 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 cursor-pointer"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            title="Toggle theme"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -187,27 +245,31 @@ export default function Home() {
               <Link href="/settings">
                 <Button
                   size="sm"
-                  className="font-semibold gap-1.5 rounded-full px-4 text-black bg-silver-gradient"
+                  className="font-bold gap-1.5 rounded-full px-4 text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer shadow-lg"
                 >
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span className="hidden sm:inline">Account</span>
                 </Button>
               </Link>
             </>
           ) : (
             <>
               <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5">
-                  <LogIn className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-300 hover:text-white hover:bg-white/10 font-bold cursor-pointer"
+                >
+                  <LogIn className="h-4 w-4 mr-1.5" />
                   Sign In
                 </Button>
               </Link>
               <Link href="/sign-up">
                 <Button
                   size="sm"
-                  className="font-semibold rounded-full px-4 text-black bg-silver-gradient"
+                  className="font-extrabold rounded-full px-5 text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 shadow-[0_0_20px_rgba(37,99,235,0.4)] cursor-pointer"
                 >
-                  Get Started
+                  Join Free
                 </Button>
               </Link>
             </>
@@ -215,176 +277,176 @@ export default function Home() {
         </div>
       </header>
 
-      <HeroBanner creators={allCreators} isLoading={creatorsLoading} />
+      {/* ── Cinematic Hero Banner with Video Trailer & Switcher ── */}
+      <HeroBanner
+        creators={allCreators as any}
+        isLoading={creatorsLoading}
+        onPlayTrailer={handlePlayTrailer}
+      />
 
-      <div className="space-y-8 py-8">
-        <StoryBar
-          storyGroups={storyGroups}
-          creators={allCreators.slice(0, 12)}
-        />
+      {/* ── Seamless Layered OTT Content Shelves (Smooth Scroll Overlap) ── */}
+      <div className="relative z-20 -mt-16 sm:-mt-24 md:-mt-32 space-y-6 pb-20 bg-gradient-to-b from-transparent via-zinc-950 to-black">
+        {/* Story Bar */}
+        <div className="pt-2">
+          <StoryBar
+            storyGroups={storyGroups}
+            creators={allCreators.slice(0, 12)}
+          />
+        </div>
 
-        <FilterBar
-          onSearchChange={setSearchQuery}
-          onCategoryChange={setCategoryFilter}
-          onAccessChange={setAccessFilter}
-        />
+        {/* Filter & Search Bar */}
+        <div className="px-6 md:px-14">
+          <FilterBar
+            onSearchChange={setSearchQuery}
+            onCategoryChange={setCategoryFilter}
+            onAccessChange={setAccessFilter}
+          />
+        </div>
 
-        {!isSignedIn && (
-          <div
-            className="mx-4 md:mx-8 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 bg-accent/30 border border-border backdrop-blur-md"
-          >
-            <div>
-              <p className="text-foreground font-semibold">Unlock the full experience</p>
-              <p className="text-muted-foreground text-sm">Sign in to subscribe, save content, and get personalized recommendations.</p>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <Link href="/sign-in">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-foreground hover:bg-accent border-border"
-                >
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button
-                  size="sm"
-                  className="font-semibold text-black bg-silver-gradient"
-                >
-                  Join Free
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── Top Creators Section ── */}
-        {(creatorsLoading || topCreators.length > 0) && (
-          <div className="px-4 md:px-8">
-            <div className="flex items-center gap-3 mb-5">
-              <Crown className="h-5 w-5 text-yellow-500" />
-              <h2 className="text-xl font-extrabold text-foreground tracking-tight">Top Creators</h2>
-              <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold">#1 Ranked</span>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-              {creatorsLoading
-                ? [1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="flex-none w-44 snap-start rounded-2xl p-4 space-y-3 animate-pulse bg-card border border-border">
-                      <div className="h-14 w-14 rounded-full mx-auto bg-muted" />
-                      <div className="h-3 rounded w-24 mx-auto bg-muted" />
-                      <div className="h-2.5 rounded w-16 mx-auto bg-muted" />
-                    </div>
-                  ))
-                : topCreators.map((creator, idx) => {
-                    const ringGradient = idx === 0
-                      ? "linear-gradient(135deg, #fbbf24, #f59e0b)"
-                      : idx === 1
-                      ? "linear-gradient(135deg, #e5e5e5, #a0a0a0)"
-                      : idx === 2
-                      ? "linear-gradient(135deg, #d97706, #b45309)"
-                      : "linear-gradient(135deg, #909090, #606060)";
-                    const badgeBg = idx === 0 ? "#fbbf24" : idx === 1 ? "#d4d4d4" : idx === 2 ? "#b45309" : "#707070";
-                    const badgeColor = idx <= 2 ? "#000" : "#fff";
-                    return (
-                      <Link key={creator.id} href={`/creators/${creator.id}`}>
-                        <div
-                          className="flex-none w-44 snap-start cursor-pointer group rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-0.5 bg-card border border-border hover:border-primary/50 hover:shadow-silver-glow"
-                        >
-                          <div className="relative mb-3">
-                            <div className="p-0.5 rounded-full" style={{ background: ringGradient }}>
-                              <Avatar className="h-14 w-14 rounded-full border-2 border-background">
-                                <AvatarImage src={creator.avatarUrl || undefined} alt={creator.name} className="rounded-full" />
-                                <AvatarFallback className="font-bold text-lg rounded-full bg-muted text-muted-foreground">
-                                  {creator.name[0]?.toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                            </div>
-                            <span
-                              className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs font-extrabold border-2 border-background"
-                              style={{ background: badgeBg, color: badgeColor }}
-                            >
-                              {idx + 1}
-                            </span>
-                          </div>
-
-                          <p className="text-foreground font-bold text-sm truncate w-full">{creator.name}</p>
-                          {creator.niche && <p className="text-muted-foreground text-xs truncate w-full mt-0.5">{creator.niche}</p>}
-
-                          <div className="mt-2 flex items-center gap-1 text-muted-foreground text-xs">
-                            <span className="font-semibold text-foreground">{creator.subscriberCount.toLocaleString()}</span>
-                            <span>subs</span>
-                          </div>
-
-                          <div className="mt-3 w-full">
-                            <span
-                              className="block text-xs font-bold rounded-lg py-1.5 transition-all text-muted-foreground bg-muted border border-border hover:bg-accent"
-                            >
-                              ${creator.monthlyPrice}/mo
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })
-              }
-            </div>
-          </div>
-        )}
-
+        {/* ── ROW 1: TOP 10 on DropBeynd Today (Matching Reference Screenshot) ── */}
         <ContentRow
-          title="Trending Creators"
+          title="Top 10 on DropBeynd Today"
+          badge="Top10"
+          isTop10Row={true}
+          aspect="16/9"
+          items={toCreatorItems(topCreators, "16/9")}
+          isLoading={creatorsLoading}
+          onPlay={handlePlayTrailer}
+        />
+
+        {/* ── ROW 2: Trending Blockbusters & Creator Exclusives ── */}
+        <ContentRow
+          title="Trending Blockbusters & Series"
           badge="Hot"
-          items={toCreatorItems(trending)}
-          isLoading={creatorsLoading}
-        />
-
-        <ContentRow
-          title="Free Content"
-          badge="Free"
-          items={toPostItems(filteredFree)}
-          isLoading={freeLoading}
-        />
-
-        <ContentRow
-          title="Popular This Week"
-          items={toCreatorItems(filtered.slice(0, 15))}
-          isLoading={creatorsLoading}
-        />
-
-        <ContentRow
-          title="Premium Content"
-          badge="Premium"
-          items={toPostItems(filteredPremium)}
+          aspect="16/9"
+          items={toPostItems(filteredPremium, "16/9")}
           isLoading={premiumLoading}
+          onPlay={handlePlayTrailer}
         />
 
+        {/* ── ROW 3: Free Streamable Shows & Videos ── */}
         <ContentRow
-          title="New Creators"
-          badge="New"
-          items={toCreatorItems(filteredNew.slice(0, 15))}
-          isLoading={newLoading}
+          title="Watch Free on DropBeynd"
+          badge="Free"
+          aspect="16/9"
+          items={toPostItems(filteredFree, "16/9")}
+          isLoading={freeLoading}
+          onPlay={handlePlayTrailer}
         />
 
+        {/* ── ROW 4: Masterclasses & Video Courses (Portrait Aspect) ── */}
+        <ContentRow
+          title="Featured Masterclasses & Courses"
+          badge="Premium"
+          aspect="2/3"
+          items={toCreatorItems(filtered.slice(0, 12), "2/3")}
+          isLoading={creatorsLoading}
+          onPlay={handlePlayTrailer}
+        />
+
+        {/* ── ROW 5: New Creators & Studios ── */}
+        <ContentRow
+          title="Newly Added Creators"
+          badge="New"
+          aspect="16/9"
+          items={toCreatorItems(filteredNew.slice(0, 15), "16/9")}
+          isLoading={newLoading}
+          onPlay={handlePlayTrailer}
+        />
+
+        {/* CTA Banner for logged-out users */}
         {!isSignedIn && (
-          <div className="mx-4 md:mx-8 py-16 text-center">
-            <h2 className="text-3xl font-extrabold text-foreground mb-3">Ready to dive in?</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your free account to subscribe to creators, comment, and unlock premium content.</p>
-            <Link href="/sign-up">
-              <Button
-                size="lg"
-                className="font-bold px-8 rounded-full text-black bg-silver-gradient shadow-silver-glow"
-              >
-                Start for Free
-              </Button>
-            </Link>
+          <div className="mx-6 md:mx-14 my-12 p-8 rounded-3xl relative overflow-hidden bg-gradient-to-r from-blue-950/60 via-zinc-900 to-purple-950/60 border border-white/10 shadow-2xl">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-2 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <Sparkles className="h-5 w-5 text-cyan-400" />
+                  <span className="text-cyan-400 font-extrabold text-xs tracking-wider uppercase">
+                    Unlimited Streaming Access
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Ready to experience the next era of content?
+                </h3>
+                <p className="text-zinc-400 text-sm max-w-xl">
+                  Subscribe to your favorite creators, stream unreleased 4K videos, interact with live masterclasses, and get 1-on-1 access.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <Link href="/sign-up">
+                  <Button
+                    size="lg"
+                    className="h-12 px-8 rounded-full font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-pink-600 hover:opacity-95 shadow-[0_0_25px_rgba(99,102,241,0.5)] cursor-pointer"
+                  >
+                    Start Watching Free
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      <footer className="border-t py-8 text-center text-sm border-border text-muted-foreground">
-        <p>© {new Date().getFullYear()} DropBeynd. All rights reserved.</p>
+      {/* ── Fullscreen Theater Video Modal ── */}
+      {activeTheaterItem && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-6 md:p-10 animate-in fade-in duration-300">
+          <div className="relative w-full max-w-5xl bg-zinc-950 rounded-2xl overflow-hidden border border-white/15 shadow-[0_0_60px_rgba(0,0,0,0.9)]">
+            {/* Modal Close button */}
+            <button
+              onClick={() => setActiveTheaterItem(null)}
+              className="absolute top-4 right-4 z-30 h-10 w-10 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center border border-white/20 transition-all hover:scale-110 cursor-pointer shadow-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Video Container */}
+            <div className="relative aspect-[16/9] w-full bg-black">
+              <video
+                src={activeTheaterItem.videoUrl}
+                autoPlay
+                controls
+                playsInline
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Video Info Bottom Bar */}
+            <div className="p-6 bg-zinc-950 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">
+                    {activeTheaterItem.title}
+                  </h3>
+                  <p className="text-cyan-400 font-semibold text-xs sm:text-sm">
+                    {activeTheaterItem.subtitle}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs font-bold text-zinc-300">
+                    4K ULTRA HD
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs font-bold text-zinc-300">
+                    U/A 16+
+                  </span>
+                </div>
+              </div>
+
+              {activeTheaterItem.bio && (
+                <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-3xl">
+                  {activeTheaterItem.bio}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/10 py-10 text-center text-xs text-zinc-500 bg-black">
+        <p>© {new Date().getFullYear()} DropBeynd Platform. All streaming content & media rights reserved.</p>
       </footer>
     </div>
   );
 }
+
