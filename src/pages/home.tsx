@@ -215,9 +215,13 @@ export default function Home() {
         </div>
       </header>
 
-      <HeroBanner creators={allCreators} isLoading={creatorsLoading} />
+      {/* Hero Viewport Visual Layer */}
+      <div className="relative w-full z-0 overflow-hidden">
+        <HeroBanner creators={allCreators} isLoading={creatorsLoading} />
+      </div>
 
-      <div className="space-y-8 py-8">
+      {/* Content Surface rising seamlessly into the viewport */}
+      <div className="relative z-10 -mt-8 md:-mt-14 bg-background rounded-t-[24px] md:rounded-t-[32px] border-t border-border/40 shadow-[0_-20px_40px_rgba(0,0,0,0.45)] space-y-8 pt-8 pb-8">
         <StoryBar
           storyGroups={storyGroups}
           creators={allCreators.slice(0, 12)}
