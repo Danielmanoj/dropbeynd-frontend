@@ -16,6 +16,7 @@ interface StoryBarProps {
     name: string;
     avatarUrl: string | null;
   }>;
+  showAddStory?: boolean;
 }
 
 function getInitials(name: string) {
@@ -36,7 +37,7 @@ function AvatarCircle({ name, url, size = "md" }: { name: string; url: string | 
   );
 }
 
-export function StoryBar({ storyGroups = [], creators = [] }: StoryBarProps) {
+export function StoryBar({ storyGroups = [], creators = [], showAddStory = false }: StoryBarProps) {
   const { isSignedIn } = useAuth();
 
   const displayItems = storyGroups.length > 0
@@ -53,7 +54,7 @@ export function StoryBar({ storyGroups = [], creators = [] }: StoryBarProps) {
   return (
     <div className="px-4 md:px-8">
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        {isSignedIn && (
+        {showAddStory && isSignedIn && (
           <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
             <div className="h-16 w-16 rounded-full border-2 border-dashed border-border flex items-center justify-center bg-muted hover:bg-accent transition-colors cursor-pointer">
               <Plus className="h-6 w-6 text-muted-foreground" />
