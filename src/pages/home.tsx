@@ -234,25 +234,7 @@ export default function Home() {
       </div>
 
       {/* ── Continuous Rising Content Surface ── */}
-      <div className="relative z-10 -mt-10 md:-mt-18 bg-background rounded-t-[28px] md:rounded-t-[36px] border-t border-border/40 shadow-[0_-25px_50px_rgba(0,0,0,0.6)] space-y-7 pt-6 pb-12">
-        {/* Category Pills Strip */}
-        <div className="px-4 md:px-8 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
-              className={`flex-shrink-0 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all border ${
-                (categoryFilter === cat || (!categoryFilter && cat === "All"))
-                  ? "bg-silver-gradient text-black font-bold border-transparent shadow-sm"
-                  : "bg-card/70 text-muted-foreground border-border/60 hover:text-foreground hover:bg-card"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-
+      <div className="relative z-10 -mt-10 md:-mt-18 bg-background rounded-t-[28px] md:rounded-t-[36px] border-t border-border/40 shadow-[0_-25px_50px_rgba(0,0,0,0.6)] space-y-7 pt-7 pb-12">
         {!isSignedIn && (
           <div
             className="mx-4 md:mx-8 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 bg-accent/30 border border-border backdrop-blur-md"
@@ -318,7 +300,7 @@ export default function Home() {
                           <div className="relative mb-3">
                             <div className="p-0.5 rounded-full" style={{ background: ringGradient }}>
                               <Avatar className="h-14 w-14 rounded-full border-2 border-background">
-                                <AvatarImage src={creator.avatarUrl || undefined} alt={creator.name} className="rounded-full" />
+                                <AvatarImage src={creator.avatarUrl || undefined} alt={creator.name} className="rounded-full object-cover" />
                                 <AvatarFallback className="font-bold text-lg rounded-full bg-muted text-muted-foreground">
                                   {creator.name[0]?.toUpperCase()}
                                 </AvatarFallback>
@@ -355,6 +337,23 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* ── Category Filter Pills Strip (Below Top Creators) ── */}
+        <div className="px-4 md:px-8 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+              className={`flex-shrink-0 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all border ${
+                (categoryFilter === cat || (!categoryFilter && cat === "All"))
+                  ? "bg-silver-gradient text-black font-bold border-transparent shadow-sm"
+                  : "bg-card/70 text-muted-foreground border-border/60 hover:text-foreground hover:bg-card"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
         <ContentRow
           title="Trending Creators"
