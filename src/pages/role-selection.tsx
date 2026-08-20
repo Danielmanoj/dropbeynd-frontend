@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { User, Compass, PenSquare, Sparkles, ArrowRight, BookOpen, Layers, CheckCircle2 } from "lucide-react";
 import { useGetMe, useGetMyCreatorProfile, useUpdateMe, useCreateCreatorProfile } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ export default function RoleSelection() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: clerkUser } = useUser();
   const [step, setStep] = useState<"role" | "creator-setup">("role");
 
   const { data: me } = useGetMe();
@@ -59,6 +61,9 @@ export default function RoleSelection() {
   });
 
   const handleSelectUser = () => {
+    if (clerkUser?.id) {
+      localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+    }
     updateMe.mutate(
       { data: {} },
       {
@@ -78,6 +83,9 @@ export default function RoleSelection() {
   const handleSelectCreator = () => {
     // If user already has a creator profile or is creator, take them directly to dashboard
     if (me?.role === "creator" || creatorProfile?.id) {
+      if (clerkUser?.id) {
+        localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+      }
       setLocation("/creator/dashboard");
       return;
     }
@@ -98,6 +106,9 @@ export default function RoleSelection() {
       { data: creatorData },
       {
         onSuccess: () => {
+          if (clerkUser?.id) {
+            localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+          }
           queryClient.invalidateQueries({ queryKey: ["db-user-role"] });
           queryClient.invalidateQueries({ queryKey: [`/api/users/me`] });
           queryClient.invalidateQueries({ queryKey: [`/api/creators/me`] });
@@ -106,6 +117,9 @@ export default function RoleSelection() {
         },
         onError: (err: any) => {
           if (err?.message?.includes("already exists") || err?.status === 409) {
+            if (clerkUser?.id) {
+              localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+            }
             setLocation("/creator/dashboard");
             return;
           }

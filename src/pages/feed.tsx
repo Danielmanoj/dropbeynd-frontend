@@ -4,10 +4,10 @@ import { formatDistanceToNow, format } from "date-fns";
 import {
   Lock, Play, Pause, Volume2, VolumeX, Maximize2,
   Image as ImageIcon, Compass, MoreHorizontal, Verified,
-  Eye, TrendingUp, Sparkles, Search, X
+  Eye, TrendingUp, Sparkles, Search, X, ArrowRight, PenSquare
 } from "lucide-react";
 import { useAuth } from "@clerk/react";
-import { useGetFeed, getGetFeedQueryKey, useBookmarkPost } from "@/lib/api-client";
+import { useGetFeed, getGetFeedQueryKey, useBookmarkPost, useGetMe } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,69 @@ import { PostInteractions } from "@/components/post-interactions";
 import { useToast } from "@/hooks/use-toast";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+function WantToBeCreatorBanner() {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-card to-background p-5 shadow-lg shadow-violet-950/10 mb-6">
+      <div className="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl pointer-events-none" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="h-11 w-11 shrink-0 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-400 shadow-sm">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-base text-foreground">Want to be a Creator?</h3>
+              <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5">
+                Earn & Publish
+              </Badge>
+            </div>
+            <p className="text-muted-foreground text-xs md:text-sm leading-relaxed max-w-lg">
+              Switch from normal user to creator without any hassle. Publish exclusive videos & posts, launch paid courses, and start earning from your subscribers.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setDismissed(true)}
+          className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors"
+          title="Dismiss"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-4 pt-3.5 border-t border-border/60 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            Keep 100% Control
+          </span>
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            Course Builder
+          </span>
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            Instant Activation
+          </span>
+        </div>
+
+        <Link href="/role-selection">
+          <Button
+            size="sm"
+            className="bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl px-4 gap-2 shadow-md shadow-violet-600/20 transition-all hover:scale-105"
+          >
+            Become a Creator
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 
@@ -411,6 +474,7 @@ export default function Feed() {
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { data: user } = useGetMe({ query: { enabled: !!isSignedIn } as any });
   const { data: posts, isLoading } = useGetFeed(undefined, {
     query: { enabled: !!isSignedIn } as any,
   });
@@ -418,6 +482,8 @@ export default function Feed() {
 
   const [bookmarkStates, setBookmarkStates] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
+
+  const isNotCreator = user && user.role !== "creator" && user.role !== "admin";
 
   function handleBookmarkChange(postId: string, saved: boolean) {
     setBookmarkStates(s => ({ ...s, [postId]: saved }));
@@ -468,19 +534,22 @@ export default function Feed() {
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-24 space-y-5 px-4 bg-background">
-        <div className="h-20 w-20 rounded-full bg-muted border border-border flex items-center justify-center mx-auto">
-          <Compass className="h-9 w-9 text-muted-foreground" />
+      <div className="max-w-2xl mx-auto py-10 px-4 bg-background">
+        {isNotCreator && <WantToBeCreatorBanner />}
+        <div className="text-center py-14 space-y-5">
+          <div className="h-20 w-20 rounded-full bg-muted border border-border flex items-center justify-center mx-auto">
+            <Compass className="h-9 w-9 text-muted-foreground" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Your feed is empty</h2>
+            <p className="text-muted-foreground max-w-sm mx-auto">Subscribe to creators to see their latest posts, videos, and exclusive content here.</p>
+          </div>
+          <Link href="/browse">
+            <Button className="bg-primary hover:opacity-90 text-primary-foreground rounded-full px-8 font-bold gap-2 mt-2">
+              <Compass className="h-4 w-4" /> Browse Creators
+            </Button>
+          </Link>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Your feed is empty</h2>
-          <p className="text-muted-foreground max-w-sm mx-auto">Subscribe to creators to see their latest posts, videos, and exclusive content here.</p>
-        </div>
-        <Link href="/browse">
-          <Button className="bg-primary hover:opacity-90 text-primary-foreground rounded-full px-8 font-bold gap-2 mt-2">
-            <Compass className="h-4 w-4" /> Browse Creators
-          </Button>
-        </Link>
       </div>
     );
   }
@@ -492,6 +561,8 @@ export default function Feed() {
         <h1 className="text-2xl font-black text-foreground tracking-tight">Feed</h1>
         <span className="text-muted-foreground text-sm">{filteredPosts.length} posts</span>
       </div>
+
+      {isNotCreator && <WantToBeCreatorBanner />}
 
       {searchBar}
 

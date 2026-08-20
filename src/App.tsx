@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth, useUser } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -253,6 +253,24 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+function RoleAutoRedirect() {
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const { data: role, isLoading } = useDbRole();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || isLoading || !clerkUser) return;
+    if (role === "admin" || role === "suspended") return;
+
+    const hasChosenRole = localStorage.getItem(`role_selected_${clerkUser.id}`);
+    if (!hasChosenRole && role === "user" && location !== "/role-selection") {
+      setLocation("/role-selection");
+    }
+  }, [isLoaded, isSignedIn, isLoading, clerkUser, role, location, setLocation]);
+
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -263,6 +281,12 @@ function ClerkProviderWithRoutes() {
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
+      signInFallbackRedirectUrl={`${basePath}/role-selection`}
+      signUpFallbackRedirectUrl={`${basePath}/role-selection`}
+      signInForceRedirectUrl={`${basePath}/role-selection`}
+      signUpForceRedirectUrl={`${basePath}/role-selection`}
+      afterSignInUrl={`${basePath}/role-selection`}
+      afterSignUpUrl={`${basePath}/role-selection`}
       localization={{
         signIn: {
           start: {
@@ -283,6 +307,7 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <AdminAutoRedirect />
+        <RoleAutoRedirect />
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
