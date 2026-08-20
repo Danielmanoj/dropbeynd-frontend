@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Lock, Play, BookOpen, Users } from "lucide-react";
 
@@ -50,7 +50,26 @@ export function ContentCard({
   isLocked, niche, price, subscriberCount, href,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string | null>(thumbnailUrl || avatarUrl || null);
+  const [hasError, setHasError] = useState(false);
   const gradient = getGradient(niche);
+
+  // Sync if props change
+  useEffect(() => {
+    setImgSrc(thumbnailUrl || avatarUrl || null);
+    setHasError(false);
+  }, [thumbnailUrl, avatarUrl]);
+
+  const handleImageError = () => {
+    // If thumbnailUrl failed, try falling back to creator avatarUrl
+    if (imgSrc === thumbnailUrl && avatarUrl && avatarUrl !== thumbnailUrl) {
+      setImgSrc(avatarUrl);
+    } else {
+      // Both failed or no secondary URL available
+      setHasError(true);
+      setImgSrc(null);
+    }
+  };
 
   return (
     <Link href={href}>
@@ -73,12 +92,14 @@ export function ContentCard({
           }}
         >
           <div className="aspect-[2/3] w-full relative">
-            {(thumbnailUrl || avatarUrl) ? (
+            {imgSrc && !hasError ? (
               <img
-                src={thumbnailUrl ?? avatarUrl ?? ""}
+                src={imgSrc}
                 alt={title}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={handleImageError}
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
