@@ -169,7 +169,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[70vh] min-h-[500px] overflow-hidden select-none"
+      className="relative w-full h-[82vh] min-h-[580px] overflow-hidden select-none"
       style={{ background: "#0a0a0a" }}
     >
       {/* ── Parallax Background Layer ── */}
@@ -205,14 +205,14 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
       {/* ── Foreground Hero Content ── */}
       <div
         ref={contentRef}
-        className={`absolute inset-0 flex items-center will-change-transform transition-opacity duration-300 ${
+        className={`absolute inset-0 flex flex-col justify-end pb-16 md:pb-22 px-8 md:px-16 will-change-transform transition-opacity duration-300 ${
           animating ? "opacity-0" : "opacity-100"
         }`}
       >
-        <div className="px-8 md:px-16 max-w-2xl">
+        <div className="max-w-2xl space-y-2">
           {item.niche && (
             <span
-              className="inline-block text-xs font-semibold uppercase tracking-widest mb-3 px-3 py-1 rounded-full"
+              className="inline-block text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full mb-1"
               style={{
                 color: "#c0c0c0",
                 background: "rgba(192,192,192,0.12)",
@@ -222,15 +222,15 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
               {item.niche}
             </span>
           )}
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-lg">
             {item.name}
           </h1>
           {item.bio && (
-            <p className="text-zinc-300 text-base md:text-lg mb-8 max-w-lg leading-relaxed line-clamp-3">
+            <p className="text-zinc-300 text-base md:text-lg mb-6 max-w-lg leading-relaxed line-clamp-3">
               {item.bio}
             </p>
           )}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 pt-2">
             <Link href={`/creators/${item.id}`}>
               <Button
                 size="lg"

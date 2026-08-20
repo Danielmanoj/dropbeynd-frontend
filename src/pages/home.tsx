@@ -2,17 +2,31 @@ import { useState, useCallback } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
-import { Compass, LogIn, User, Crown, Sun, Moon } from "lucide-react";
+import { Compass, LogIn, User, Crown, Sun, Moon, Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HeroBanner } from "@/components/hero-banner";
-import { StoryBar } from "@/components/story-bar";
 import { ContentRow } from "@/components/content-row";
-import { FilterBar } from "@/components/filter-bar";
 import { NotificationBell } from "@/components/notification-bell";
 import { useTheme } from "@/components/theme-provider";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+const CATEGORIES = [
+  "All",
+  "Fitness & Health",
+  "Technology & Coding",
+  "Finance & Investing",
+  "Education & Tutoring",
+  "Art & Illustration",
+  "Music & Audio",
+  "Cooking & Food",
+  "Travel & Lifestyle",
+  "Gaming",
+  "Business",
+  "Personal Development",
+];
 
 async function fetchPublicCreators(params?: Record<string, string>) {
   const q = params ? "?" + new URLSearchParams(params).toString() : "";
@@ -26,12 +40,6 @@ async function fetchPublicContent(params?: Record<string, string>) {
   const r = await fetch(`${BASE}/api/public/content${q}`);
   if (!r.ok) throw new Error("Failed");
   return r.json() as Promise<PostItem[]>;
-}
-
-async function fetchStories() {
-  const r = await fetch(`${BASE}/api/stories`);
-  if (!r.ok) throw new Error("Failed");
-  return r.json();
 }
 
 interface CreatorItem {
@@ -67,6 +75,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<"all" | "free" | "premium">("all");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const { data: allCreators = [], isLoading: creatorsLoading } = useQuery({
     queryKey: ["public-creators"],
@@ -88,24 +97,19 @@ export default function Home() {
     queryFn: () => fetchPublicContent({ filter: "premium", limit: "20" }),
   });
 
-  const { data: storyGroups = [] } = useQuery({
-    queryKey: ["stories"],
-    queryFn: fetchStories,
-  });
-
   const safeArray = <T,>(val: any): T[] => (Array.isArray(val) ? val : []);
 
   const filterCreators = useCallback((list: any) => {
     let r = safeArray<CreatorItem>(list);
     if (searchQuery) r = r.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-    if (categoryFilter) r = r.filter(c => c.niche?.includes(categoryFilter));
+    if (categoryFilter && categoryFilter !== "All") r = r.filter(c => c.niche?.includes(categoryFilter));
     return r;
   }, [searchQuery, categoryFilter]);
 
   const filterContent = useCallback((list: any) => {
     let r = safeArray<PostItem>(list);
     if (searchQuery) r = r.filter(p => (p.title ?? p.creatorName ?? "").toLowerCase().includes(searchQuery.toLowerCase()));
-    if (categoryFilter) r = r.filter(p => p.creatorNiche?.includes(categoryFilter));
+    if (categoryFilter && categoryFilter !== "All") r = r.filter(p => p.creatorNiche?.includes(categoryFilter));
     return r;
   }, [searchQuery, categoryFilter]);
 
@@ -149,34 +153,76 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* ── Fixed Nav Header with Integrated Search & Filters ── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md border-b border-border/50 bg-background/80"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-3 backdrop-blur-md border-b border-border/50 bg-background/85"
       >
-        <Link href="/">
-          <div className="flex items-center gap-2 font-extrabold text-xl text-foreground cursor-pointer">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
-            >
-              <Compass className="h-5 w-5" />
+        <div className="flex items-center gap-5">
+          <Link href="/">
+            <div className="flex items-center gap-2 font-extrabold text-xl text-foreground cursor-pointer">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
+              >
+                <Compass className="h-5 w-5" />
+              </div>
+              <span className="hidden sm:inline">DropBeynd</span>
             </div>
-            <span className="hidden sm:inline">DropBeynd</span>
-          </div>
-        </Link>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-          <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">Browse</Link>
-          {isSignedIn && (
-            <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">My Feed</Link>
-          )}
-        </nav>
+          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
+            <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
+            <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">Browse</Link>
+            {isSignedIn && (
+              <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">My Feed</Link>
+            )}
+          </nav>
+        </div>
+
+        {/* ── Search & Filter Integration in Nav ── */}
+        <div className="flex items-center gap-2 flex-1 max-w-xs md:max-w-md mx-3">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search creators..."
+              className="h-8 pl-8 pr-8 text-xs bg-card/60 border-border/60 text-foreground placeholder:text-muted-foreground rounded-full focus-visible:ring-1"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Access Mode Selector */}
+          <div className="hidden sm:flex items-center gap-1 bg-muted/60 p-0.5 rounded-full border border-border/40">
+            {(["all", "free", "premium"] as const).map((a) => (
+              <button
+                key={a}
+                onClick={() => setAccessFilter(a)}
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
+                  accessFilter === a
+                    ? "bg-silver-gradient text-black shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {a.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            title="Toggle theme"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -187,9 +233,9 @@ export default function Home() {
               <Link href="/settings">
                 <Button
                   size="sm"
-                  className="font-semibold gap-1.5 rounded-full px-4 text-black bg-silver-gradient"
+                  className="font-semibold gap-1.5 rounded-full px-3.5 h-8 text-xs text-black bg-silver-gradient"
                 >
-                  <User className="h-4 w-4" />
+                  <User className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Profile</span>
                 </Button>
               </Link>
@@ -197,15 +243,15 @@ export default function Home() {
           ) : (
             <>
               <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5">
-                  <LogIn className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1.5 h-8 text-xs">
+                  <LogIn className="h-3.5 w-3.5" />
                   Sign In
                 </Button>
               </Link>
               <Link href="/sign-up">
                 <Button
                   size="sm"
-                  className="font-semibold rounded-full px-4 text-black bg-silver-gradient"
+                  className="font-semibold rounded-full px-3.5 h-8 text-xs text-black bg-silver-gradient"
                 >
                   Get Started
                 </Button>
@@ -215,23 +261,30 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Viewport Visual Layer */}
+      {/* ── Viewport-Anchored Hero Visual Layer ── */}
       <div className="relative w-full z-0 overflow-hidden">
         <HeroBanner creators={allCreators} isLoading={creatorsLoading} />
       </div>
 
-      {/* Content Surface rising seamlessly into the viewport */}
-      <div className="relative z-10 -mt-8 md:-mt-14 bg-background rounded-t-[24px] md:rounded-t-[32px] border-t border-border/40 shadow-[0_-20px_40px_rgba(0,0,0,0.45)] space-y-8 pt-8 pb-8">
-        <StoryBar
-          storyGroups={storyGroups}
-          creators={allCreators.slice(0, 12)}
-        />
+      {/* ── Continuous Rising Content Surface ── */}
+      <div className="relative z-10 -mt-10 md:-mt-18 bg-background rounded-t-[28px] md:rounded-t-[36px] border-t border-border/40 shadow-[0_-25px_50px_rgba(0,0,0,0.6)] space-y-7 pt-6 pb-12">
+        {/* Category Pills Strip */}
+        <div className="px-4 md:px-8 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+              className={`flex-shrink-0 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all border ${
+                (categoryFilter === cat || (!categoryFilter && cat === "All"))
+                  ? "bg-silver-gradient text-black font-bold border-transparent shadow-sm"
+                  : "bg-card/70 text-muted-foreground border-border/60 hover:text-foreground hover:bg-card"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
-        <FilterBar
-          onSearchChange={setSearchQuery}
-          onCategoryChange={setCategoryFilter}
-          onAccessChange={setAccessFilter}
-        />
 
         {!isSignedIn && (
           <div
