@@ -406,9 +406,9 @@ function PostCard({ post, isBookmarked, onBookmarkChange }: PostCardProps) {
                   </p>
                   <p className="text-muted-foreground text-sm">Subscribe to unlock exclusive content</p>
                 </div>
-                <Link href={`/creators/${post.creatorId}`}>
+                <Link href={`/payments?subscribe=${post.creatorId}`}>
                   <Button size="sm"
-                    className="bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-full px-6 gap-1.5">
+                    className="bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-full px-6 gap-1.5 shadow-lg shadow-primary/20">
                     <Lock className="h-3.5 w-3.5" /> Unlock for ${priceDisplay}/mo
                   </Button>
                 </Link>

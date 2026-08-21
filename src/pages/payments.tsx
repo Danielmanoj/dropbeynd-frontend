@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useLocation, Link } from "wouter";
 import {
   Download, Search, Receipt, CreditCard, Building2,
   Plus, Trash2, CheckCircle2, ShieldCheck, Zap, RefreshCw,
-  Sparkles, AlertCircle, ArrowUpRight, Lock, Check
+  Sparkles, AlertCircle, ArrowUpRight, Lock, Check, UserCheck, ArrowRight
 } from "lucide-react";
-import { useGetPaymentHistory, useGetMe } from "@/lib/api-client";
+import { useGetPaymentHistory, useGetMe, useGetCreator } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
@@ -53,6 +55,14 @@ interface PayoutAccount {
 }
 
 export default function Payments() {
+  const [, setLocation] = useLocation();
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const subscribeCreatorId = searchParams.get("subscribe") || searchParams.get("creatorId");
+
+  const { data: subscribeCreator, isLoading: subscribeCreatorLoading } = useGetCreator(subscribeCreatorId || "", {
+    query: { enabled: !!subscribeCreatorId } as any,
+  });
+
   const { data: payments, isLoading: paymentsLoading } = useGetPaymentHistory();
   const { data: me } = useGetMe();
   const { getToken } = useAuth();
@@ -61,6 +71,9 @@ export default function Payments() {
 
   const [activeTab, setActiveTab] = useState("transactions");
   const [search, setSearch] = useState("");
+
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribedSuccess, setSubscribedSuccess] = useState(false);
 
   // Payment Methods (Cards) State
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
@@ -303,8 +316,176 @@ export default function Payments() {
     URL.revokeObjectURL(url);
   }
 
+  const handleCompleteSubscription = async () => {
+    if (!subscribeCreatorId) return;
+    setSubscribing(true);
+    try {
+      const r = await authFetch(`${BASE}/api/payments/direct-pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorId: subscribeCreatorId,
+          amount: subscribeCreator?.monthlyPrice || "10",
+        }),
+      });
+
+      if (r.ok) {
+        setSubscribedSuccess(true);
+        queryClient.invalidateQueries();
+        toast({
+          title: "🎉 Subscription Activated!",
+          description: `You are now subscribed to ${subscribeCreator?.name || "the creator"}. All content is now unlocked!`,
+        });
+      } else {
+        const err = await r.json().catch(() => ({}));
+        toast({
+          title: "Payment failed",
+          description: err.error || "Could not complete payment.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Network error",
+        description: "Payment processing error.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto pb-16 space-y-8">
+      {/* ── Active Subscription Checkout Banner ── */}
+      {subscribeCreatorId && (
+        <Card className="border-2 border-violet-500/40 bg-gradient-to-br from-violet-950/40 via-card to-background shadow-2xl rounded-2xl overflow-hidden">
+          <div className="bg-violet-600/15 border-b border-violet-500/30 px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-violet-400 font-bold text-sm">
+              <Sparkles className="h-4 w-4" /> Creator Subscription Checkout
+            </div>
+            <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/40 text-xs">
+              Instant Access
+            </Badge>
+          </div>
+
+          <CardContent className="p-6 md:p-8 space-y-6">
+            {subscribeCreatorLoading ? (
+              <div className="flex gap-4 items-center">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+            ) : subscribeCreator ? (
+              subscribedSuccess ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="h-16 w-16 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <CheckCircle2 className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-extrabold text-foreground">🎉 Subscription Confirmed!</h2>
+                    <p className="text-muted-foreground text-sm mt-1 max-w-md mx-auto">
+                      You now have 100% unlocked access to all exclusive posts, full HD videos, and courses from <strong className="text-foreground">{subscribeCreator.name}</strong>.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex justify-center gap-3">
+                    <Link href={`/creators/${subscribeCreator.id}?subscribed=1`}>
+                      <Button className="bg-silver-gradient text-black font-bold rounded-xl px-8 shadow-silver-glow hover:opacity-90 gap-2">
+                        View Unlocked Content <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  {/* Left: Creator Summary */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16 border-2 border-violet-500/50 shadow-md">
+                        <AvatarImage src={subscribeCreator.avatarUrl || undefined} alt={subscribeCreator.name} />
+                        <AvatarFallback className="bg-violet-600 text-white font-bold text-lg">
+                          {subscribeCreator.name?.[0]?.toUpperCase() || "C"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-xl font-extrabold text-foreground">{subscribeCreator.name}</h3>
+                          {subscribeCreator.isVerified && <ShieldCheck className="h-4 w-4 text-violet-400" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{subscribeCreator.niche || "Content Creator"}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-background/60 border border-border/80 rounded-xl p-4 space-y-2 text-xs">
+                      <div className="font-semibold text-foreground flex items-center gap-1.5">
+                        <UserCheck className="h-4 w-4 text-emerald-400" /> Included with your subscription:
+                      </div>
+                      <ul className="space-y-1.5 text-muted-foreground pl-1">
+                        <li className="flex items-center gap-2">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> Full access to all locked posts & exclusive photos
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> Stream premium video content & tutorials
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> Access full video courses & structured lessons
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> Cancel or manage anytime with one click
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Right: Checkout Pricing & Pay Button */}
+                  <div className="bg-card border border-border rounded-xl p-6 space-y-5 shadow-sm">
+                    <div className="flex justify-between items-center border-b border-border pb-4">
+                      <div>
+                        <span className="text-sm font-semibold text-foreground">Monthly Membership</span>
+                        <p className="text-xs text-muted-foreground">Renews monthly, cancel anytime</p>
+                      </div>
+                      <span className="text-2xl font-black text-foreground">
+                        ${subscribeCreator.monthlyPrice || 10}/mo
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>${subscribeCreator.monthlyPrice || 10}.00</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Platform Fee</span>
+                        <span className="text-emerald-400 font-medium">Free</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-bold text-foreground border-t border-border pt-2">
+                        <span>Total Due Today</span>
+                        <span className="text-primary">${subscribeCreator.monthlyPrice || 10}.00</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleCompleteSubscription}
+                      disabled={subscribing}
+                      className="w-full bg-silver-gradient text-black font-extrabold h-12 rounded-xl shadow-silver-glow hover:opacity-90 gap-2 text-base transition-all"
+                    >
+                      <Lock className="h-4 w-4" />
+                      {subscribing ? "Processing Payment..." : `Pay $${subscribeCreator.monthlyPrice || 10} & Subscribe`}
+                    </Button>
+
+                    <p className="text-[11px] text-muted-foreground text-center flex items-center justify-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> 256-bit SSL encrypted secure checkout
+                    </p>
+                  </div>
+                </div>
+              )
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

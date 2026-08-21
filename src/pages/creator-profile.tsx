@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import {
   FileText, Lock, Play, Pause, Volume2, VolumeX, BookOpen, ShieldCheck,
@@ -10,9 +10,9 @@ import {
   useGetCreatorPosts,
   useGetCreatorCourses,
   useGetSubscriptionStatus,
-  useCreateCheckoutSession,
   useGetMe,
 } from "@/lib/api-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +252,16 @@ export default function CreatorProfile() {
   const { data: posts, isLoading: postsLoading } = useGetCreatorPosts(creatorId, undefined, { query: { enabled: !!creatorId } as any });
   const { data: courses, isLoading: coursesLoading } = useGetCreatorCourses(creatorId, { query: { enabled: !!creatorId } as any });
   const { data: subStatus } = useGetSubscriptionStatus(creatorId, { query: { enabled: !!creatorId && isSignedIn === true } as any });
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("subscribed=1")) {
+      queryClient.invalidateQueries({ queryKey: ["/api/creators", creatorId, "subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/creators", creatorId, "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/creators", creatorId, "courses"] });
+    }
+  }, [creatorId, queryClient]);
 
   const isOwner = Boolean(isSignedIn && me && creator && (creator.userId === me.id || creator.id === (me as any).creatorId));
   const isSubscribed = isOwner || subStatus?.status === "active";
@@ -265,12 +275,13 @@ export default function CreatorProfile() {
       })
       .catch(() => {});
   }, [creator, creatorId]);
-  const checkout = useCreateCheckoutSession();
 
   const handleSubscribe = () => {
-    checkout.mutate({ data: { creatorId } }, {
-      onSuccess: (data) => { window.location.href = data.url; },
-    });
+    if (!isSignedIn) {
+      setLocation("/sign-in");
+      return;
+    }
+    setLocation(`/payments?subscribe=${creatorId}`);
   };
 
   async function toggleFollow() {
@@ -371,7 +382,6 @@ export default function CreatorProfile() {
               <Button
                 size="sm"
                 onClick={handleSubscribe}
-                disabled={!isSignedIn || checkout.isPending}
                 className="bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl shrink-0 gap-1.5 shadow-md shadow-violet-900/40"
               >
                 <Zap className="h-3.5 w-3.5" />
@@ -452,11 +462,10 @@ export default function CreatorProfile() {
                 <Button
                   size="lg"
                   onClick={handleSubscribe}
-                  disabled={!isSignedIn || checkout.isPending}
                   className="bg-violet-600 hover:bg-violet-500 text-white font-bold shadow-lg shadow-violet-900/40 rounded-xl px-6 gap-1.5"
                 >
                   <Zap className="h-5 w-5" />
-                  {checkout.isPending ? "Processing..." : isSignedIn ? `Subscribe · $${creator.monthlyPrice}/mo` : "Sign in to Subscribe"}
+                  {isSignedIn ? `Subscribe · $${creator.monthlyPrice}/mo` : "Sign in to Subscribe"}
                 </Button>
               ) : (
                 <Button size="lg" className="bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 rounded-xl pointer-events-none">
@@ -657,11 +666,10 @@ export default function CreatorProfile() {
                 <Button
                   size="lg"
                   onClick={handleSubscribe}
-                  disabled={!isSignedIn || checkout.isPending}
                   className="bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl gap-2 shadow-lg shadow-violet-900/50 shrink-0 px-6"
                 >
                   <Zap className="h-5 w-5" />
-                  {checkout.isPending ? "Processing…" : isSignedIn ? `Subscribe for $${creator.monthlyPrice}/mo` : "Sign in to Subscribe"}
+                  {isSignedIn ? `Subscribe for $${creator.monthlyPrice}/mo` : "Sign in to Subscribe"}
                 </Button>
               </div>
             </div>
