@@ -179,15 +179,15 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
             src={item.coverUrl}
             alt={item.name}
             className="w-full h-full object-cover"
-            style={{ filter: "brightness(0.4) saturate(0.6)" }}
+            style={{ filter: "brightness(0.88) saturate(1.05)" }}
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} to-black`} />
         )}
 
-        {/* Vignette overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/50 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
+        {/* Cinematic Vignette overlays - subtle left shadow for text legibility, soft bottom fade into dark background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/35 via-35% to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 via-18% to-transparent pointer-events-none" />
 
         {/* Subtle silver noise texture overlay */}
         <div
