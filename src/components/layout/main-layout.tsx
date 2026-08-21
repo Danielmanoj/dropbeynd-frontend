@@ -62,38 +62,32 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     return false;
   });
 
-  const SidebarBody = ({ isExpanded, isMobile = false }: { isExpanded: boolean; isMobile?: boolean }) => {
+  const SidebarBody = ({ isMobile = false }: { isMobile?: boolean }) => {
     const { theme, setTheme } = useTheme();
     return (
       <div className="flex h-full flex-col bg-sidebar select-none">
         {/* Logo */}
-        <div className={cn(
-          "flex h-16 shrink-0 items-center border-b border-sidebar-border/40 overflow-hidden transition-all duration-300",
-          isExpanded ? "px-5" : "px-0 justify-center"
-        )}>
-          <Link href="/" className="flex items-center gap-3 font-bold text-xl cursor-pointer">
+        <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border/40 overflow-hidden px-4">
+          <Link href="/" className="flex items-center gap-3.5 font-bold text-xl cursor-pointer w-full">
             <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
             >
-              <Compass className="h-4.5 w-4.5" />
+              <Compass className="h-5 w-5" />
             </div>
-            <span
-              className={cn(
-                "bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent whitespace-nowrap transition-all duration-300 font-extrabold tracking-tight",
-                isExpanded ? "opacity-100 max-w-[200px] translate-x-0" : "opacity-0 max-w-0 -translate-x-4 pointer-events-none"
-              )}
-            >
-              DropBeynd
-            </span>
+            <div className={cn(
+              "overflow-hidden transition-all duration-300",
+              isMobile ? "block" : "hidden group-hover/sidebar:block"
+            )}>
+              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent whitespace-nowrap font-extrabold tracking-tight">
+                DropBeynd
+              </span>
+            </div>
           </Link>
         </div>
 
         {/* Nav Items */}
-        <div className={cn(
-          "flex-1 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide",
-          isExpanded ? "px-3" : "px-2.5"
-        )}>
-          <nav className="flex flex-col gap-1">
+        <div className="flex-1 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide px-3">
+          <nav className="flex flex-col gap-1.5">
             {filteredNavItems.map((item) => {
               const isActive = location === item.href || location.startsWith(`${item.href}/`);
               return (
@@ -101,43 +95,42 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group relative flex items-center h-11 rounded-xl transition-all duration-200",
-                    isExpanded ? "px-3.5" : "px-0 justify-center",
+                    "group/item relative flex items-center h-11 rounded-xl transition-all duration-200 px-2.5",
                     isActive
-                      ? "bg-accent border border-accent-border/50 text-foreground shadow-sm"
+                      ? "bg-accent border border-accent-border/50 text-foreground shadow-sm font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-transparent"
                   )}
                   onClick={() => {
                     if (isMobile) setIsMobileMenuOpen(false);
                   }}
-                  title={!isExpanded ? item.title : undefined}
+                  title={item.title}
                 >
-                  <span className={cn(
-                    "flex items-center justify-center shrink-0 transition-colors",
-                    isExpanded ? "mr-3" : "",
-                    isActive ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"
+                  <div className={cn(
+                    "flex h-6 w-6 items-center justify-center shrink-0 transition-colors",
+                    isActive ? "text-primary font-bold" : "text-muted-foreground group-hover/item:text-foreground"
                   )}>
                     {item.icon}
-                  </span>
-                  <span
-                    className={cn(
-                      "whitespace-nowrap text-sm transition-all duration-300 overflow-hidden",
-                      isExpanded
-                        ? "opacity-100 max-w-[160px] translate-x-0 font-medium"
-                        : "opacity-0 max-w-0 -translate-x-2 pointer-events-none"
-                    )}
-                  >
-                    {item.title}
-                  </span>
+                  </div>
+                  <div className={cn(
+                    "overflow-hidden transition-all duration-300 ml-3.5",
+                    isMobile ? "block" : "hidden group-hover/sidebar:block"
+                  )}>
+                    <span className="whitespace-nowrap text-sm font-medium">
+                      {item.title}
+                    </span>
+                  </div>
                   {item.badge && item.badge > 0 ? (
-                    isExpanded ? (
-                      <span
-                        className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-bold bg-silver-gradient text-black"
-                      >
+                    isMobile ? (
+                      <span className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-bold bg-silver-gradient text-black">
                         {item.badge}
                       </span>
                     ) : (
-                      <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                      <>
+                        <span className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-bold bg-silver-gradient text-black hidden group-hover/sidebar:inline-block">
+                          {item.badge}
+                        </span>
+                        <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background group-hover/sidebar:hidden" />
+                      </>
                     )
                   ) : null}
                 </Link>
@@ -147,23 +140,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Theme Toggle & User section */}
-        <div className={cn(
-          "border-t p-3 space-y-3 border-sidebar-border/40 overflow-hidden transition-all duration-300",
-          isExpanded ? "p-4" : "p-2.5"
-        )}>
-          <div className={cn(
-            "flex items-center transition-all duration-200",
-            isExpanded ? "justify-between px-1 mb-1" : "justify-center"
-          )}>
-            {isExpanded && (
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+        <div className="border-t p-3 space-y-3 border-sidebar-border/40 overflow-hidden">
+          {/* Appearance */}
+          <div className="flex items-center justify-between px-1">
+            <div className={cn(
+              "overflow-hidden",
+              isMobile ? "block" : "hidden group-hover/sidebar:block"
+            )}>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                 Appearance
               </span>
-            )}
+            </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
+              className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 mx-auto group-hover/sidebar:mx-0"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               title="Toggle theme"
             >
@@ -173,11 +164,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
           {clerkUser ? (
             <>
-              <div className={cn(
-                "flex items-center gap-3 transition-all duration-200",
-                isExpanded ? "px-1" : "justify-center px-0"
-              )}>
-                <Link href="/settings" className="shrink-0 cursor-pointer">
+              <div className="flex items-center gap-3 px-1">
+                <Link href="/settings" className="shrink-0 cursor-pointer mx-auto group-hover/sidebar:mx-0">
                   <Avatar className="h-9 w-9 border border-border/80 shadow-sm hover:scale-105 transition-transform">
                     <AvatarImage src={user?.avatarUrl || clerkUser?.imageUrl} alt={user?.name || "User"} />
                     <AvatarFallback className="text-sm bg-muted text-muted-foreground font-bold">
@@ -185,35 +173,38 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <div
-                  className={cn(
-                    "flex flex-col overflow-hidden transition-all duration-300 min-w-0 flex-1",
-                    isExpanded ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0 pointer-events-none"
-                  )}
-                >
+                <div className={cn(
+                  "flex flex-col overflow-hidden min-w-0 flex-1",
+                  isMobile ? "flex" : "hidden group-hover/sidebar:flex"
+                )}>
                   <span className="truncate text-sm font-semibold text-foreground">{user?.name || clerkUser?.fullName || "Loading..."}</span>
                   <span className="truncate text-xs text-muted-foreground">{user?.role ?? "member"}</span>
                 </div>
               </div>
-              {isExpanded && (
-                <div className="grid grid-cols-2 gap-2">
-                  <Link href="/settings" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
-                    <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-muted-foreground hover:text-foreground text-xs font-medium transition-all bg-accent/50 border border-border hover:bg-accent">
-                      <Settings className="h-3.5 w-3.5" /> Settings
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => signOut()}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-destructive hover:text-destructive/80 text-xs font-medium transition-all bg-destructive/10 border border-destructive/20"
-                  >
-                    <LogOut className="h-3.5 w-3.5" /> Sign Out
+
+              <div className={cn(
+                "grid grid-cols-2 gap-2 pt-1",
+                isMobile ? "grid" : "hidden group-hover/sidebar:grid"
+              )}>
+                <Link href="/settings" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
+                  <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-muted-foreground hover:text-foreground text-xs font-medium transition-all bg-accent/50 border border-border hover:bg-accent">
+                    <Settings className="h-3.5 w-3.5" /> Settings
                   </button>
-                </div>
-              )}
+                </Link>
+                <button
+                  onClick={() => signOut()}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-destructive hover:text-destructive/80 text-xs font-medium transition-all bg-destructive/10 border border-destructive/20"
+                >
+                  <LogOut className="h-3.5 w-3.5" /> Sign Out
+                </button>
+              </div>
             </>
           ) : (
-            isExpanded ? (
-              <div className="space-y-2">
+            <>
+              <div className={cn(
+                "space-y-2",
+                isMobile ? "block" : "hidden group-hover/sidebar:block"
+              )}>
                 <p className="text-muted-foreground text-xs px-1 whitespace-nowrap">Sign in to access your account</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Link href="/sign-in" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
@@ -228,15 +219,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
               </div>
-            ) : (
-              <div className="flex justify-center">
+              <div className={cn(
+                "flex justify-center",
+                isMobile ? "hidden" : "group-hover/sidebar:hidden"
+              )}>
                 <Link href="/sign-in">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" title="Sign In">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground" title="Sign In">
                     <LogIn className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
-            )
+            </>
           )}
         </div>
       </div>
@@ -248,16 +241,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Navigation Rail & Expandable Side Nav */}
       <div className="hidden md:block w-[72px] shrink-0">
         <aside
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className={cn(
-            "fixed top-0 left-0 h-screen z-50 border-r border-sidebar-border bg-sidebar/95 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-            isHovered
-              ? "w-64 shadow-[16px_0_48px_rgba(0,0,0,0.65)]"
-              : "w-[72px]"
-          )}
+          className="group/sidebar fixed top-0 left-0 h-screen z-50 border-r border-sidebar-border bg-sidebar/95 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] w-[72px] hover:w-64 hover:shadow-[20px_0_50px_rgba(0,0,0,0.85)]"
         >
-          <SidebarBody isExpanded={isHovered} />
+          <SidebarBody isMobile={false} />
         </aside>
       </div>
 
@@ -281,7 +267,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 border-r border-border bg-sidebar">
-              <SidebarBody isExpanded={true} isMobile={true} />
+              <SidebarBody isMobile={true} />
             </SheetContent>
           </Sheet>
         </header>
