@@ -233,8 +233,81 @@ export default function Home() {
         <HeroBanner creators={allCreators} isLoading={creatorsLoading} />
       </div>
 
-      {/* ── Continuous Rising Content Surface ── */}
-      <div className="relative z-10 -mt-10 md:-mt-18 bg-background rounded-t-[28px] md:rounded-t-[36px] border-t border-border/40 shadow-[0_-25px_50px_rgba(0,0,0,0.6)] space-y-7 pt-7 pb-12">
+      {/* ── Floating Top Creators Section ── */}
+      {(creatorsLoading || topCreators.length > 0) && (
+        <div className="relative z-20 -mt-32 sm:-mt-40 md:-mt-48 px-4 md:px-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Crown className="h-5 w-5 text-yellow-500" />
+            <h2 className="text-xl font-extrabold text-foreground tracking-tight drop-shadow">Top Creators</h2>
+            <span className="px-2 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-500 dark:text-yellow-400 text-xs font-bold backdrop-blur-md">#1 Ranked</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide">
+            {creatorsLoading
+              ? [1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="flex-none w-44 snap-start rounded-2xl p-4 space-y-3 animate-pulse bg-card/40 backdrop-blur-md border border-white/10">
+                    <div className="h-14 w-14 rounded-full mx-auto bg-muted/60" />
+                    <div className="h-3 rounded w-24 mx-auto bg-muted/60" />
+                    <div className="h-2.5 rounded w-16 mx-auto bg-muted/60" />
+                  </div>
+                ))
+              : topCreators.map((creator, idx) => {
+                  const ringGradient = idx === 0
+                    ? "linear-gradient(135deg, #fbbf24, #f59e0b)"
+                    : idx === 1
+                    ? "linear-gradient(135deg, #e5e5e5, #a0a0a0)"
+                    : idx === 2
+                    ? "linear-gradient(135deg, #d97706, #b45309)"
+                    : "linear-gradient(135deg, #909090, #606060)";
+                  const badgeBg = idx === 0 ? "#fbbf24" : idx === 1 ? "#d4d4d4" : idx === 2 ? "#b45309" : "#707070";
+                  const badgeColor = idx <= 2 ? "#000" : "#fff";
+                  return (
+                    <Link key={creator.id} href={`/creators/${creator.id}`}>
+                      <div
+                        className="flex-none w-44 snap-start cursor-pointer group rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 bg-background/50 dark:bg-black/50 backdrop-blur-xl border border-white/15 dark:border-white/10 hover:border-white/30 dark:hover:border-white/25 hover:bg-background/75 dark:hover:bg-black/75 shadow-xl hover:shadow-[0_12px_30px_-5px_rgba(0,0,0,0.7)]"
+                      >
+                        <div className="relative mb-3">
+                          <div className="p-0.5 rounded-full" style={{ background: ringGradient }}>
+                            <Avatar className="h-14 w-14 rounded-full border-2 border-background">
+                              <AvatarImage src={creator.avatarUrl || undefined} alt={creator.name} className="rounded-full object-cover" />
+                              <AvatarFallback className="font-bold text-lg rounded-full bg-muted text-muted-foreground">
+                                {creator.name[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <span
+                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs font-extrabold border-2 border-background shadow"
+                            style={{ background: badgeBg, color: badgeColor }}
+                          >
+                            {idx + 1}
+                          </span>
+                        </div>
+
+                        <p className="text-foreground font-bold text-sm truncate w-full group-hover:text-primary transition-colors">{creator.name}</p>
+                        {creator.niche && <p className="text-muted-foreground text-xs truncate w-full mt-0.5">{creator.niche}</p>}
+
+                        <div className="mt-2 flex items-center gap-1 text-muted-foreground text-xs">
+                          <span className="font-semibold text-foreground">{creator.subscriberCount.toLocaleString()}</span>
+                          <span>subs</span>
+                        </div>
+
+                        <div className="mt-3 w-full">
+                          <span
+                            className="block text-xs font-bold rounded-lg py-1.5 transition-all text-muted-foreground bg-muted/60 border border-border/60 group-hover:bg-accent group-hover:text-foreground"
+                          >
+                            ${creator.monthlyPrice}/mo
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })
+            }
+          </div>
+        </div>
+      )}
+
+      {/* ── Content Stream ── */}
+      <div className="relative z-10 space-y-8 pb-14">
         {!isSignedIn && (
           <div
             className="mx-4 md:mx-8 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 bg-accent/30 border border-border backdrop-blur-md"
@@ -261,79 +334,6 @@ export default function Home() {
                   Join Free
                 </Button>
               </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── Top Creators Section ── */}
-        {(creatorsLoading || topCreators.length > 0) && (
-          <div className="px-4 md:px-8">
-            <div className="flex items-center gap-3 mb-5">
-              <Crown className="h-5 w-5 text-yellow-500" />
-              <h2 className="text-xl font-extrabold text-foreground tracking-tight">Top Creators</h2>
-              <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold">#1 Ranked</span>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-              {creatorsLoading
-                ? [1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="flex-none w-44 snap-start rounded-2xl p-4 space-y-3 animate-pulse bg-card border border-border">
-                      <div className="h-14 w-14 rounded-full mx-auto bg-muted" />
-                      <div className="h-3 rounded w-24 mx-auto bg-muted" />
-                      <div className="h-2.5 rounded w-16 mx-auto bg-muted" />
-                    </div>
-                  ))
-                : topCreators.map((creator, idx) => {
-                    const ringGradient = idx === 0
-                      ? "linear-gradient(135deg, #fbbf24, #f59e0b)"
-                      : idx === 1
-                      ? "linear-gradient(135deg, #e5e5e5, #a0a0a0)"
-                      : idx === 2
-                      ? "linear-gradient(135deg, #d97706, #b45309)"
-                      : "linear-gradient(135deg, #909090, #606060)";
-                    const badgeBg = idx === 0 ? "#fbbf24" : idx === 1 ? "#d4d4d4" : idx === 2 ? "#b45309" : "#707070";
-                    const badgeColor = idx <= 2 ? "#000" : "#fff";
-                    return (
-                      <Link key={creator.id} href={`/creators/${creator.id}`}>
-                        <div
-                          className="flex-none w-44 snap-start cursor-pointer group rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-0.5 bg-card border border-border hover:border-primary/50 hover:shadow-silver-glow"
-                        >
-                          <div className="relative mb-3">
-                            <div className="p-0.5 rounded-full" style={{ background: ringGradient }}>
-                              <Avatar className="h-14 w-14 rounded-full border-2 border-background">
-                                <AvatarImage src={creator.avatarUrl || undefined} alt={creator.name} className="rounded-full object-cover" />
-                                <AvatarFallback className="font-bold text-lg rounded-full bg-muted text-muted-foreground">
-                                  {creator.name[0]?.toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                            </div>
-                            <span
-                              className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs font-extrabold border-2 border-background"
-                              style={{ background: badgeBg, color: badgeColor }}
-                            >
-                              {idx + 1}
-                            </span>
-                          </div>
-
-                          <p className="text-foreground font-bold text-sm truncate w-full">{creator.name}</p>
-                          {creator.niche && <p className="text-muted-foreground text-xs truncate w-full mt-0.5">{creator.niche}</p>}
-
-                          <div className="mt-2 flex items-center gap-1 text-muted-foreground text-xs">
-                            <span className="font-semibold text-foreground">{creator.subscriberCount.toLocaleString()}</span>
-                            <span>subs</span>
-                          </div>
-
-                          <div className="mt-3 w-full">
-                            <span
-                              className="block text-xs font-bold rounded-lg py-1.5 transition-all text-muted-foreground bg-muted border border-border hover:bg-accent"
-                            >
-                              ${creator.monthlyPrice}/mo
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })
-              }
             </div>
           </div>
         )}

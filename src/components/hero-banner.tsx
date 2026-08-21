@@ -70,21 +70,21 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
 
     const updateScrollTransforms = () => {
       const scrollY = window.scrollY || window.pageYOffset;
-      const height = containerRef.current?.offsetHeight || 500;
-      // Normalized progress 0 to 1 over the hero height
-      const progress = Math.min(1, Math.max(0, scrollY / height));
+      const height = containerRef.current?.offsetHeight || 600;
+      // Normalized progress 0 to 1 over hero height
+      const progress = Math.min(1, Math.max(0, scrollY / (height * 0.75)));
 
       if (bgRef.current) {
-        const translateY = progress * -16; // recedes upward smoothly
-        const scale = 1 + progress * 0.035; // extremely subtle zoom
-        const opacity = 1 - progress * 0.55; // gentle fade
+        const translateY = progress * -15; // recedes upward smoothly
+        const scale = 1 + progress * 0.04; // subtle cinematic zoom
+        const opacity = Math.max(0, 1 - progress * 1.35); // cover image smoothly disappears as you scroll down
         bgRef.current.style.transform = `translate3d(0, ${translateY}%, 0) scale(${scale})`;
         bgRef.current.style.opacity = `${opacity}`;
       }
 
       if (contentRef.current) {
-        const translateY = progress * -70; // foreground moves upward
-        const opacity = Math.max(0, 1 - progress * 1.5); // fades gracefully
+        const translateY = progress * -60; // foreground moves upward
+        const opacity = Math.max(0, 1 - progress * 1.6); // fades gracefully
         contentRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
         contentRef.current.style.opacity = `${opacity}`;
       }
@@ -112,10 +112,10 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
 
   if (isLoading) {
     return (
-      <div className="relative w-full h-[70vh] min-h-[500px] overflow-hidden flex items-center bg-zinc-950">
+      <div className="relative w-full h-[88vh] min-h-[600px] max-h-[850px] overflow-hidden flex items-center bg-zinc-950">
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-        <div className="relative z-10 px-8 md:px-16 max-w-2xl space-y-4 animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="relative z-10 px-8 md:px-16 max-w-2xl space-y-4 animate-pulse pb-44">
           <div className="h-6 w-28 rounded-full bg-zinc-800" />
           <div className="h-12 md:h-16 w-4/5 rounded-2xl bg-zinc-800" />
           <div className="h-4 w-full max-w-md rounded bg-zinc-800/80" />
@@ -131,10 +131,10 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
 
   if (items.length === 0) {
     return (
-      <div className="relative w-full h-[60vh] min-h-[460px] overflow-hidden flex items-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black">
+      <div className="relative w-full h-[75vh] min-h-[520px] max-h-[750px] overflow-hidden flex items-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black">
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-        <div className="relative z-10 px-8 md:px-16 max-w-3xl">
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="relative z-10 px-8 md:px-16 max-w-3xl pb-40">
           <span className="inline-block text-xs font-semibold uppercase tracking-widest mb-3 px-3 py-1 rounded-full text-zinc-300 bg-white/10 border border-white/20">
             Welcome to DropBeynd
           </span>
@@ -169,7 +169,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[82vh] min-h-[580px] overflow-hidden select-none"
+      className="relative w-full h-[88vh] min-h-[620px] max-h-[850px] overflow-hidden select-none"
       style={{ background: "#0a0a0a" }}
     >
       {/* ── Parallax Background Layer ── */}
@@ -191,7 +191,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
 
       {/* Vignette overlays */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/50 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
 
       {/* Subtle silver noise texture overlay */}
       <div
@@ -205,7 +205,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
       {/* ── Foreground Hero Content ── */}
       <div
         ref={contentRef}
-        className={`absolute inset-0 flex flex-col justify-end pb-16 md:pb-22 px-8 md:px-16 will-change-transform transition-opacity duration-300 ${
+        className={`absolute inset-0 flex flex-col justify-end pb-44 sm:pb-52 md:pb-60 px-8 md:px-16 will-change-transform transition-opacity duration-300 ${
           animating ? "opacity-0" : "opacity-100"
         }`}
       >
@@ -278,7 +278,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
         {/* Nav arrows */}
         <button
           onClick={prev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 cursor-pointer"
+          className="absolute left-4 top-[40%] -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 cursor-pointer z-10"
           style={{
             background: "rgba(0,0,0,0.6)",
             border: "1px solid rgba(192,192,192,0.2)",
@@ -289,7 +289,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
         </button>
         <button
           onClick={next}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 cursor-pointer"
+          className="absolute right-4 top-[40%] -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 cursor-pointer z-10"
           style={{
             background: "rgba(0,0,0,0.6)",
             border: "1px solid rgba(192,192,192,0.2)",
@@ -300,7 +300,7 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
         </button>
 
         {/* Slide indicators */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-40 sm:bottom-48 md:bottom-56 left-1/2 -translate-x-1/2 flex gap-2 z-10">
           {items.map((_, i) => (
             <button
               key={i}
