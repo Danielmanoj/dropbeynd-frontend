@@ -6,10 +6,12 @@ import {
   User, Mail, Save, ShieldCheck, ShieldAlert, Bell,
   CheckCircle, Clock, AlertCircle, Heart, Bookmark,
   Lock, Play, Image as ImageIcon, FileText, ChevronDown, ChevronUp,
+  Trash2, AlertTriangle, KeyRound, ArrowRight, Check, X
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useGetMe, useUpdateMe, getGetMeQueryKey } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth, useClerk } from "@clerk/react";
 import { Button } from "@/components/ui/button";
 import {
   Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,
@@ -20,6 +22,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/back-button";
 import { DropzoneUploader } from "@/components/upload/dropzone-uploader";
@@ -188,6 +194,9 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { data: user, isLoading } = useGetMe();
   const updateMe = useUpdateMe();
+  const { signOut } = useClerk();
+  const { getToken } = useAuth();
+  const [, setLocation] = useLocation();
 
   const [notifNewPost, setNotifNewPost] = useState(true);
   const [notifNewCourse, setNotifNewCourse] = useState(true);
@@ -196,6 +205,13 @@ export default function Settings() {
 
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [requestingVerification, setRequestingVerification] = useState(false);
+
+  // Two-Step Account Deletion State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
+  const [understandChecked, setUnderstandChecked] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -273,6 +289,56 @@ export default function Settings() {
   }
 
   const currentAvatar = form.watch("avatarUrl") || user?.avatarUrl || undefined;
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmationText.trim().toUpperCase() !== "DELETE MY ACCOUNT") {
+      toast({
+        title: "Verification mismatch",
+        description: "Please type 'DELETE MY ACCOUNT' exactly to confirm.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${BASE}/api/users/me`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ confirmation: deleteConfirmationText.trim() }),
+      });
+
+      if (res.ok) {
+        toast({
+          title: "Account deleted",
+          description: "Your account and data have been permanently removed.",
+        });
+        setDeleteDialogOpen(false);
+        await signOut();
+        setLocation("/sign-in");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast({
+          title: "Deletion failed",
+          description: err.error || "Could not delete account. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Network error",
+        description: "Could not connect to server to delete account.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto pb-16 space-y-6">
@@ -433,14 +499,144 @@ export default function Settings() {
         </CardFooter>
       </Card>
 
-      {/* ── Danger Zone ── */}
-      <Card className="bg-card border-red-500/30 rounded-2xl shadow-sm">
+      {/* ── Danger Zone: Two-Step Account Deletion ── */}
+      <Card className="bg-card border-red-500/30 rounded-2xl shadow-sm overflow-hidden">
         <CardHeader className="pb-4">
-          <CardTitle className="text-red-500 text-lg">Danger Zone</CardTitle>
-          <CardDescription>Irreversible actions that affect your account.</CardDescription>
+          <div className="flex items-center gap-2 text-red-500">
+            <AlertTriangle className="h-5 w-5" />
+            <CardTitle className="text-red-500 text-lg">Danger Zone</CardTitle>
+          </div>
+          <CardDescription>Irreversible actions for your DropBeynd account.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">To delete your account or transfer data, contact <span className="text-violet-600 dark:text-violet-400">support@dropbeynd.com</span>.</p>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-red-950/20 border border-red-500/20">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">Delete Account</p>
+              <p className="text-xs text-muted-foreground">
+                Permanently delete your profile, posts, active subscriptions, and user data.
+              </p>
+            </div>
+            <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+              setDeleteDialogOpen(open);
+              if (!open) {
+                setDeleteStep(1);
+                setUnderstandChecked(false);
+                setDeleteConfirmationText("");
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="rounded-xl gap-2 shrink-0 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                >
+                  <Trash2 className="h-4 w-4" /> Delete Account
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="sm:max-w-md rounded-2xl border-red-500/30">
+                {deleteStep === 1 ? (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-red-500 text-xl">
+                        <AlertTriangle className="h-5 w-5" /> Step 1 of 2: Confirm Deletion
+                      </DialogTitle>
+                      <DialogDescription>
+                        Please review the consequences of deleting your DropBeynd account:
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 py-3 text-xs text-muted-foreground">
+                      <div className="p-3 rounded-xl bg-red-950/30 border border-red-500/30 space-y-2">
+                        <p className="font-semibold text-red-400">The following data will be permanently wiped:</p>
+                        <ul className="space-y-1.5 list-disc list-inside text-foreground/80">
+                          <li>Your profile details, display name, and avatar</li>
+                          <li>All your active subscriptions & payment history</li>
+                          <li>Your uploaded posts, videos, courses, and lessons</li>
+                          <li>Your bookmarks, likes, followers, and comments</li>
+                        </ul>
+                      </div>
+
+                      <label className="flex items-start gap-3 p-3 rounded-xl bg-muted/40 border border-border cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={understandChecked}
+                          onChange={(e) => setUnderstandChecked(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 rounded border-border text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-xs text-foreground font-medium">
+                          I understand that this action is permanent and cannot be reversed or recovered.
+                        </span>
+                      </label>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDeleteDialogOpen(false)}
+                        className="rounded-xl"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        disabled={!understandChecked}
+                        onClick={() => setDeleteStep(2)}
+                        className="bg-red-600 hover:bg-red-700 text-white rounded-xl gap-2 font-semibold"
+                      >
+                        Next: Final Verification <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-red-500 text-xl">
+                        <KeyRound className="h-5 w-5" /> Step 2 of 2: Security Verification
+                      </DialogTitle>
+                      <DialogDescription>
+                        To verify this irreversible action, type <strong className="text-foreground font-bold font-mono">DELETE MY ACCOUNT</strong> below:
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Confirmation Phrase</Label>
+                        <Input
+                          placeholder="DELETE MY ACCOUNT"
+                          value={deleteConfirmationText}
+                          onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                          className="font-mono text-sm border-red-500/40 focus-visible:ring-red-500"
+                          autoFocus
+                        />
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-muted/50 border border-border text-xs text-muted-foreground">
+                        Account to delete: <strong className="text-foreground">{user?.email}</strong>
+                      </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDeleteStep(1)}
+                        disabled={isDeleting}
+                        className="rounded-xl"
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        disabled={deleteConfirmationText.trim().toUpperCase() !== "DELETE MY ACCOUNT" || isDeleting}
+                        onClick={handleDeleteAccount}
+                        className="rounded-xl gap-2 font-semibold bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        {isDeleting ? "Deleting..." : "Permanently Delete My Account"}
+                      </Button>
+                    </DialogFooter>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardContent>
       </Card>
     </div>
