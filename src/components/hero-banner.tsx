@@ -75,17 +75,14 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
       const progress = Math.min(1, Math.max(0, scrollY / (height * 0.75)));
 
       if (bgRef.current) {
-        const translateY = progress * -15; // recedes upward smoothly
-        const scale = 1 + progress * 0.04; // subtle cinematic zoom
-        const opacity = Math.max(0, 1 - progress * 1.35); // cover image smoothly disappears as you scroll down
-        bgRef.current.style.transform = `translate3d(0, ${translateY}%, 0) scale(${scale})`;
+        // Completely static cover image (no translate/zoom), disappears smoothly as you scroll
+        const opacity = Math.max(0, 1 - progress * 1.35);
         bgRef.current.style.opacity = `${opacity}`;
+        bgRef.current.style.visibility = opacity <= 0.005 ? "hidden" : "visible";
       }
 
       if (contentRef.current) {
-        const translateY = progress * -60; // foreground moves upward
-        const opacity = Math.max(0, 1 - progress * 1.6); // fades gracefully
-        contentRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
+        const opacity = Math.max(0, 1 - progress * 1.6);
         contentRef.current.style.opacity = `${opacity}`;
       }
 
@@ -169,13 +166,13 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[88vh] min-h-[620px] max-h-[850px] overflow-hidden select-none"
+      className="relative w-full h-[88vh] min-h-[620px] max-h-[850px] select-none"
       style={{ background: "#0a0a0a" }}
     >
-      {/* ── Parallax Background Layer ── */}
+      {/* ── Static Background Layer (Fixed & Fades on Scroll) ── */}
       <div
         ref={bgRef}
-        className="absolute inset-0 w-full h-full will-change-transform pointer-events-none"
+        className="fixed top-0 left-0 w-full h-[88vh] min-h-[620px] max-h-[850px] pointer-events-none z-0 will-change-opacity overflow-hidden"
       >
         {item.coverUrl ? (
           <img
@@ -187,25 +184,25 @@ export function HeroBanner({ creators = [], isLoading }: HeroBannerProps) {
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradient} to-black`} />
         )}
+
+        {/* Vignette overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/50 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
+
+        {/* Subtle silver noise texture overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
+          style={{
+            backgroundImage:
+              'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
+          }}
+        />
       </div>
-
-      {/* Vignette overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/50 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
-
-      {/* Subtle silver noise texture overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.02] pointer-events-none"
-        style={{
-          backgroundImage:
-            'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
-        }}
-      />
 
       {/* ── Foreground Hero Content ── */}
       <div
         ref={contentRef}
-        className={`absolute inset-0 flex flex-col justify-end pb-44 sm:pb-52 md:pb-60 px-8 md:px-16 will-change-transform transition-opacity duration-300 ${
+        className={`absolute inset-0 z-10 flex flex-col justify-end pb-44 sm:pb-52 md:pb-60 px-8 md:px-16 transition-opacity duration-300 ${
           animating ? "opacity-0" : "opacity-100"
         }`}
       >
