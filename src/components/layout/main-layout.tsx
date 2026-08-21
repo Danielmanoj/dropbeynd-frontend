@@ -16,11 +16,11 @@ import {
   UserCircle,
   Sun,
   Moon,
+  LogIn,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGetMe } from "@/lib/api-client";
@@ -35,15 +35,15 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { title: "Feed", href: "/feed", icon: <HomeIcon className="h-5 w-5" /> },
-  { title: "Browse", href: "/browse", icon: <Compass className="h-5 w-5" /> },
-  { title: "Subscriptions", href: "/subscriptions", icon: <CreditCard className="h-5 w-5" /> },
-  { title: "Inbox", href: "/inbox", icon: <MessageSquare className="h-5 w-5" /> },
-  { title: "Dashboard", href: "/creator/dashboard", icon: <LayoutDashboard className="h-5 w-5" />, requiresRole: "creator" },
-  { title: "My Profile", href: "/creator/profile", icon: <UserCircle className="h-5 w-5" />, requiresRole: "creator" },
-  { title: "Payments", href: "/payments", icon: <Receipt className="h-5 w-5" /> },
-  { title: "Support", href: "/support", icon: <LifeBuoy className="h-5 w-5" /> },
-  { title: "Admin", href: "/admin", icon: <Shield className="h-5 w-5" />, requiresRole: "admin" },
+  { title: "Feed", href: "/feed", icon: <HomeIcon className="h-5 w-5 shrink-0" /> },
+  { title: "Browse", href: "/browse", icon: <Compass className="h-5 w-5 shrink-0" /> },
+  { title: "Subscriptions", href: "/subscriptions", icon: <CreditCard className="h-5 w-5 shrink-0" /> },
+  { title: "Inbox", href: "/inbox", icon: <MessageSquare className="h-5 w-5 shrink-0" /> },
+  { title: "Dashboard", href: "/creator/dashboard", icon: <LayoutDashboard className="h-5 w-5 shrink-0" />, requiresRole: "creator" },
+  { title: "My Profile", href: "/creator/profile", icon: <UserCircle className="h-5 w-5 shrink-0" />, requiresRole: "creator" },
+  { title: "Payments", href: "/payments", icon: <Receipt className="h-5 w-5 shrink-0" /> },
+  { title: "Support", href: "/support", icon: <LifeBuoy className="h-5 w-5 shrink-0" /> },
+  { title: "Admin", href: "/admin", icon: <Shield className="h-5 w-5 shrink-0" />, requiresRole: "admin" },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +52,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const { user: clerkUser } = useUser();
   const { data: user } = useGetMe({ query: { enabled: !!clerkUser } as any });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const filteredNavItems = navItems.filter((item) => {
     if (!item.requiresRole) return true;
@@ -61,24 +62,38 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     return false;
   });
 
-  const SidebarContent = () => {
+  const SidebarBody = ({ isExpanded, isMobile = false }: { isExpanded: boolean; isMobile?: boolean }) => {
     const { theme, setTheme } = useTheme();
     return (
-      <div className="flex h-full flex-col border-r bg-sidebar border-sidebar-border">
+      <div className="flex h-full flex-col bg-sidebar select-none">
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center px-6 border-b border-sidebar-border">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-xl cursor-pointer">
+        <div className={cn(
+          "flex h-16 shrink-0 items-center border-b border-sidebar-border/40 overflow-hidden transition-all duration-300",
+          isExpanded ? "px-5" : "px-0 justify-center"
+        )}>
+          <Link href="/" className="flex items-center gap-3 font-bold text-xl cursor-pointer">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-black bg-silver-gradient shadow-silver-glow"
             >
-              <Compass className="h-4 w-4" />
+              <Compass className="h-4.5 w-4.5" />
             </div>
-            <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">DropBeynd</span>
+            <span
+              className={cn(
+                "bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent whitespace-nowrap transition-all duration-300 font-extrabold tracking-tight",
+                isExpanded ? "opacity-100 max-w-[200px] translate-x-0" : "opacity-0 max-w-0 -translate-x-4 pointer-events-none"
+              )}
+            >
+              DropBeynd
+            </span>
           </Link>
         </div>
 
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="flex flex-col gap-0.5">
+        {/* Nav Items */}
+        <div className={cn(
+          "flex-1 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide",
+          isExpanded ? "px-3" : "px-2.5"
+        )}>
+          <nav className="flex flex-col gap-1">
             {filteredNavItems.map((item) => {
               const isActive = location === item.href || location.startsWith(`${item.href}/`);
               return (
@@ -86,37 +101,71 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "group relative flex items-center h-11 rounded-xl transition-all duration-200",
+                    isExpanded ? "px-3.5" : "px-0 justify-center",
                     isActive
-                      ? "bg-accent border-accent-border text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground border border-transparent"
+                      ? "bg-accent border border-accent-border/50 text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-transparent"
                   )}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={() => {
+                    if (isMobile) setIsMobileMenuOpen(false);
+                  }}
+                  title={!isExpanded ? item.title : undefined}
                 >
-                  <span className={cn(isActive ? "text-primary" : "text-muted-foreground")}>{item.icon}</span>
-                  {item.title}
+                  <span className={cn(
+                    "flex items-center justify-center shrink-0 transition-colors",
+                    isExpanded ? "mr-3" : "",
+                    isActive ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    {item.icon}
+                  </span>
+                  <span
+                    className={cn(
+                      "whitespace-nowrap text-sm transition-all duration-300 overflow-hidden",
+                      isExpanded
+                        ? "opacity-100 max-w-[160px] translate-x-0 font-medium"
+                        : "opacity-0 max-w-0 -translate-x-2 pointer-events-none"
+                    )}
+                  >
+                    {item.title}
+                  </span>
                   {item.badge && item.badge > 0 ? (
-                    <span
-                      className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-bold bg-silver-gradient text-black"
-                    >
-                      {item.badge}
-                    </span>
+                    isExpanded ? (
+                      <span
+                        className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-bold bg-silver-gradient text-black"
+                      >
+                        {item.badge}
+                      </span>
+                    ) : (
+                      <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                    )
                   ) : null}
                 </Link>
               );
             })}
           </nav>
-        </ScrollArea>
+        </div>
 
         {/* Theme Toggle & User section */}
-        <div className="border-t p-4 space-y-3 border-sidebar-border">
-          <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Appearance</span>
+        <div className={cn(
+          "border-t p-3 space-y-3 border-sidebar-border/40 overflow-hidden transition-all duration-300",
+          isExpanded ? "p-4" : "p-2.5"
+        )}>
+          <div className={cn(
+            "flex items-center transition-all duration-200",
+            isExpanded ? "justify-between px-1 mb-1" : "justify-center"
+          )}>
+            {isExpanded && (
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                Appearance
+              </span>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title="Toggle theme"
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -124,48 +173,70 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
           {clerkUser ? (
             <>
-              <div className="flex items-center gap-3 px-1">
-                <Avatar className="h-9 w-9 border border-border">
-                  <AvatarImage src={user?.avatarUrl || clerkUser?.imageUrl} alt={user?.name || "User"} />
-                  <AvatarFallback className="text-sm bg-muted text-muted-foreground">
-                    {user?.name?.[0]?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+              <div className={cn(
+                "flex items-center gap-3 transition-all duration-200",
+                isExpanded ? "px-1" : "justify-center px-0"
+              )}>
+                <Link href="/settings" className="shrink-0 cursor-pointer">
+                  <Avatar className="h-9 w-9 border border-border/80 shadow-sm hover:scale-105 transition-transform">
+                    <AvatarImage src={user?.avatarUrl || clerkUser?.imageUrl} alt={user?.name || "User"} />
+                    <AvatarFallback className="text-sm bg-muted text-muted-foreground font-bold">
+                      {user?.name?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+                <div
+                  className={cn(
+                    "flex flex-col overflow-hidden transition-all duration-300 min-w-0 flex-1",
+                    isExpanded ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0 pointer-events-none"
+                  )}
+                >
                   <span className="truncate text-sm font-semibold text-foreground">{user?.name || clerkUser?.fullName || "Loading..."}</span>
                   <span className="truncate text-xs text-muted-foreground">{user?.role ?? "member"}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)}>
-                  <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-muted-foreground hover:text-foreground text-xs font-medium transition-all bg-accent/50 border border-border hover:bg-accent">
-                    <Settings className="h-3.5 w-3.5" /> Settings
+              {isExpanded && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href="/settings" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
+                    <button className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-muted-foreground hover:text-foreground text-xs font-medium transition-all bg-accent/50 border border-border hover:bg-accent">
+                      <Settings className="h-3.5 w-3.5" /> Settings
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-destructive hover:text-destructive/80 text-xs font-medium transition-all bg-destructive/10 border border-destructive/20"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Sign Out
                   </button>
-                </Link>
-                <button
-                  onClick={() => signOut()}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-destructive hover:text-destructive/80 text-xs font-medium transition-all bg-destructive/10 border border-destructive/20"
-                >
-                  <LogOut className="h-3.5 w-3.5" /> Sign Out
-                </button>
-              </div>
+                </div>
+              )}
             </>
           ) : (
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xs px-1">Sign in to access your account</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href="/sign-in" onClick={() => setIsMobileMenuOpen(false)}>
-                  <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-foreground hover:bg-accent text-xs font-semibold transition-all bg-accent/50 border border-border">
-                    Sign In
-                  </button>
-                </Link>
-                <Link href="/sign-up" onClick={() => setIsMobileMenuOpen(false)}>
-                  <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-black text-xs font-semibold transition-all hover:opacity-90 bg-silver-gradient">
-                    Get Started
-                  </button>
+            isExpanded ? (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-xs px-1 whitespace-nowrap">Sign in to access your account</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href="/sign-in" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
+                    <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-foreground hover:bg-accent text-xs font-semibold transition-all bg-accent/50 border border-border">
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href="/sign-up" onClick={() => { if (isMobile) setIsMobileMenuOpen(false); }}>
+                    <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-black text-xs font-semibold transition-all hover:opacity-90 bg-silver-gradient">
+                      Get Started
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <Link href="/sign-in">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" title="Sign In">
+                    <LogIn className="h-4 w-4" />
+                  </Button>
                 </Link>
               </div>
-            </div>
+            )
           )}
         </div>
       </div>
@@ -174,12 +245,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 md:block">
-        <div className="sticky top-0 h-screen">
-          <SidebarContent />
-        </div>
-      </aside>
+      {/* Desktop Navigation Rail & Expandable Side Nav */}
+      <div className="hidden md:block w-[72px] shrink-0">
+        <aside
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={cn(
+            "fixed top-0 left-0 h-screen z-50 border-r border-sidebar-border bg-sidebar/95 backdrop-blur-2xl transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            isHovered
+              ? "w-64 shadow-[16px_0_48px_rgba(0,0,0,0.65)]"
+              : "w-[72px]"
+          )}
+        >
+          <SidebarBody isExpanded={isHovered} />
+        </aside>
+      </div>
 
       {/* Mobile Header */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -200,8 +280,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 border-r border-border bg-background">
-              <SidebarContent />
+            <SheetContent side="left" className="p-0 w-72 border-r border-border bg-sidebar">
+              <SidebarBody isExpanded={true} isMobile={true} />
             </SheetContent>
           </Sheet>
         </header>
@@ -215,3 +295,4 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
