@@ -552,7 +552,7 @@ export default function CreatorProfile() {
                         body={post.body}
                         price={creator.monthlyPrice}
                         onSubscribe={handleSubscribe}
-                        isPending={checkout.isPending}
+                        isPending={false}
                         isSignedIn={!!isSignedIn}
                       />
                     ) : (

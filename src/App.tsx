@@ -305,8 +305,6 @@ function ClerkProviderWithRoutes() {
       signInFallbackRedirectUrl={`${basePath}/feed`}
       signUpFallbackRedirectUrl={`${basePath}/role-selection`}
       signUpForceRedirectUrl={`${basePath}/role-selection`}
-      afterSignInUrl={`${basePath}/feed`}
-      afterSignUpUrl={`${basePath}/role-selection`}
       localization={{
         signIn: {
           start: {

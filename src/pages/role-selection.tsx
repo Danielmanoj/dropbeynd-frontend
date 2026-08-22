@@ -47,7 +47,7 @@ export default function RoleSelection() {
   const { data: creatorProfile } = useGetMyCreatorProfile({
     query: {
       retry: false,
-    },
+    } as any,
   });
 
   const updateMe = useUpdateMe();
