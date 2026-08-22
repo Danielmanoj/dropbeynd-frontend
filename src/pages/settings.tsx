@@ -6,7 +6,7 @@ import {
   User, Mail, Save, ShieldCheck, ShieldAlert, Bell,
   CheckCircle, Clock, AlertCircle, Heart, Bookmark,
   Lock, Play, Image as ImageIcon, FileText, ChevronDown, ChevronUp,
-  Trash2, AlertTriangle, KeyRound, ArrowRight, Check, X
+  Trash2, AlertTriangle, KeyRound, ArrowRight, Check, X, Sparkles
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useUpdateMe, getGetMeQueryKey } from "@/lib/api-client";
@@ -431,6 +431,49 @@ export default function Settings() {
           </Card>
         </form>
       </Form>
+
+      {/* ── Creator Studio Status ── */}
+      {user?.role === "creator" ? (
+        <Card className="bg-card border-violet-500/30 rounded-2xl shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-foreground text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-violet-500" /> Creator Studio
+            </CardTitle>
+            <CardDescription>You are an active Creator on DropBeynd.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Manage your content & courses</p>
+              <p className="text-xs text-muted-foreground">Access your creator analytics, subscriber stats, and studio dashboard.</p>
+            </div>
+            <Link href="/creator/dashboard">
+              <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl gap-2 font-semibold shrink-0">
+                Go to Dashboard <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-card border-border rounded-2xl shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-foreground text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-violet-500" /> Become a Creator
+            </CardTitle>
+            <CardDescription>Monetize your craft, launch paid subscriptions, and build your audience.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Launch your Creator Profile</p>
+              <p className="text-xs text-muted-foreground">Set your membership price and start posting exclusive content.</p>
+            </div>
+            <Link href="/role-selection">
+              <Button variant="outline" className="border-violet-500/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 rounded-xl gap-2 font-semibold shrink-0">
+                Set Up Studio <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Liked Posts ── */}
       <PostListSection
