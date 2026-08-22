@@ -104,8 +104,7 @@ function SignInPage() {
         routing="path"
         path={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
-        fallbackRedirectUrl={`${basePath}/role-selection`}
-        forceRedirectUrl={`${basePath}/role-selection`}
+        fallbackRedirectUrl={`${basePath}/feed`}
       />
     </div>
   );
@@ -129,7 +128,7 @@ function HomeRedirect() {
   return <Home />;
 }
 
-function useDbRole() {
+function useDbUser() {
   const { isSignedIn } = useAuth();
   return useQuery({
     queryKey: ["db-user-role"],
@@ -140,17 +139,30 @@ function useDbRole() {
       });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
-        if (r.status === 403 && body?.code === "SUSPENDED") return "suspended";
-        return "user";
+        if (r.status === 403 && body?.code === "SUSPENDED") {
+          return { role: "suspended", roleSelected: true };
+        }
+        return { role: "user", roleSelected: false };
       }
       const d = await r.json();
-      return (d.role as string) ?? "user";
+      return {
+        role: (d.role as string) ?? "user",
+        roleSelected: d.roleSelected ?? (d.role === "creator" || d.role === "admin"),
+      };
     },
     enabled: isSignedIn === true,
     staleTime: 0,
     refetchOnWindowFocus: true,
     retry: false,
   });
+}
+
+function useDbRole() {
+  const q = useDbUser();
+  return {
+    ...q,
+    data: q.data?.role ?? "user",
+  };
 }
 
 function SuspendedScreen() {
@@ -255,18 +267,27 @@ function ClerkQueryClientCacheInvalidator() {
 
 function RoleAutoRedirect() {
   const { user: clerkUser, isLoaded, isSignedIn } = useUser();
-  const { data: role, isLoading } = useDbRole();
+  const { data: dbUserData, isLoading } = useDbUser();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
+    // Only process when auth & user data are completely loaded for signed-in users
     if (!isLoaded || !isSignedIn || isLoading || !clerkUser) return;
-    if (role === "admin" || role === "suspended") return;
+    const role = dbUserData?.role;
+    if (role === "admin" || role === "suspended" || role === "creator") return;
 
-    const hasChosenRole = localStorage.getItem(`role_selected_${clerkUser.id}`);
-    if (!hasChosenRole && role === "user" && location !== "/role-selection") {
+    // Check if the user has already chosen a role
+    const hasChosenInClerk = clerkUser.unsafeMetadata?.roleSelected === true;
+    const hasChosenInDb = dbUserData?.roleSelected === true;
+    const hasChosenInStorage = localStorage.getItem(`role_selected_${clerkUser.id}`) === "true";
+
+    const isExistingUser = hasChosenInClerk || hasChosenInDb || hasChosenInStorage;
+
+    // Only prompt role selection for genuinely new users who have not yet selected their role
+    if (!isExistingUser && location !== "/role-selection" && !location.startsWith("/sign-in") && !location.startsWith("/sign-up")) {
       setLocation("/role-selection");
     }
-  }, [isLoaded, isSignedIn, isLoading, clerkUser, role, location, setLocation]);
+  }, [isLoaded, isSignedIn, isLoading, clerkUser, dbUserData, location, setLocation]);
 
   return null;
 }
@@ -281,11 +302,10 @@ function ClerkProviderWithRoutes() {
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
-      signInFallbackRedirectUrl={`${basePath}/role-selection`}
+      signInFallbackRedirectUrl={`${basePath}/feed`}
       signUpFallbackRedirectUrl={`${basePath}/role-selection`}
-      signInForceRedirectUrl={`${basePath}/role-selection`}
       signUpForceRedirectUrl={`${basePath}/role-selection`}
-      afterSignInUrl={`${basePath}/role-selection`}
+      afterSignInUrl={`${basePath}/feed`}
       afterSignUpUrl={`${basePath}/role-selection`}
       localization={{
         signIn: {

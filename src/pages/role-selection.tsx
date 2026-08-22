@@ -60,12 +60,23 @@ export default function RoleSelection() {
     monthlyPrice: 9.99,
   });
 
-  const handleSelectUser = () => {
+  const handleSelectUser = async () => {
     if (clerkUser?.id) {
       localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+      try {
+        await clerkUser.update({
+          unsafeMetadata: {
+            ...clerkUser.unsafeMetadata,
+            roleSelected: true,
+            selectedRole: "user",
+          },
+        });
+      } catch (e) {
+        console.warn("Clerk metadata update skipped:", e);
+      }
     }
     updateMe.mutate(
-      { data: {} },
+      { data: { roleSelected: true } as any },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["db-user-role"] });
@@ -73,7 +84,7 @@ export default function RoleSelection() {
           setLocation("/feed");
         },
         onError: () => {
-          // If update fails, still navigate to feed for standard user experience
+          queryClient.invalidateQueries({ queryKey: ["db-user-role"] });
           setLocation("/feed");
         },
       }
@@ -85,6 +96,13 @@ export default function RoleSelection() {
     if (me?.role === "creator" || creatorProfile?.id) {
       if (clerkUser?.id) {
         localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+        clerkUser.update({
+          unsafeMetadata: {
+            ...clerkUser.unsafeMetadata,
+            roleSelected: true,
+            selectedRole: "creator",
+          },
+        }).catch(() => {});
       }
       setLocation("/creator/dashboard");
       return;
@@ -105,9 +123,20 @@ export default function RoleSelection() {
     createCreator.mutate(
       { data: creatorData },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           if (clerkUser?.id) {
             localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+            try {
+              await clerkUser.update({
+                unsafeMetadata: {
+                  ...clerkUser.unsafeMetadata,
+                  roleSelected: true,
+                  selectedRole: "creator",
+                },
+              });
+            } catch (e) {
+              console.warn("Clerk metadata update skipped:", e);
+            }
           }
           queryClient.invalidateQueries({ queryKey: ["db-user-role"] });
           queryClient.invalidateQueries({ queryKey: [`/api/users/me`] });
@@ -115,10 +144,19 @@ export default function RoleSelection() {
           toast({ title: "Creator Profile Created", description: "Welcome to your creator dashboard!" });
           setLocation("/creator/dashboard");
         },
-        onError: (err: any) => {
+        onError: async (err: any) => {
           if (err?.message?.includes("already exists") || err?.status === 409) {
             if (clerkUser?.id) {
               localStorage.setItem(`role_selected_${clerkUser.id}`, "true");
+              try {
+                await clerkUser.update({
+                  unsafeMetadata: {
+                    ...clerkUser.unsafeMetadata,
+                    roleSelected: true,
+                    selectedRole: "creator",
+                  },
+                });
+              } catch (e) {}
             }
             setLocation("/creator/dashboard");
             return;
